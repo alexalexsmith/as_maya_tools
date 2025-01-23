@@ -1,5 +1,5 @@
-#as_maya_tools
-##Summary:
+# as_maya_tools
+## Summary:
 veriety of scripts and tools to speedup animation workflow in maya
 
 ## Tool List
