@@ -5,6 +5,9 @@ from maya import cmds
 
 
 class Transform(object):
+    """
+    Represents a transform node and its attributes
+    """
     def __init__(self, transform_node):
         self.transform_node = transform_node
 
@@ -28,6 +31,9 @@ class Transform(object):
 
 
 class Attribute(object):
+    """
+    Represents a single attribute on a node
+    """
     def __init__(self, attribute_path):
         self.attribute_path = attribute_path
         self.node, self.attribute = attribute_path.split(".")

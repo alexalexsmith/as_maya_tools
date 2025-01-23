@@ -74,8 +74,8 @@ def reset_selected_attributes():
     selected_nodes = cmds.ls(selection=True)
     if not selected_nodes:
         return
-    selected_attr = cmds.channelBox('mainChannelBox', query=True, selectedMainAttributes=True)
-    for attribute in selected_attr:
+    selected_attributes = cmds.channelBox('mainChannelBox', query=True, selectedMainAttributes=True)
+    for attribute in selected_attributes:
         for selected_node in selected_nodes:
             attribute_object = Attribute("{0}.{1}".format(selected_node, attribute))
 

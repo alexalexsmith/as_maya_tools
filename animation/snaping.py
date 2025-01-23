@@ -14,5 +14,6 @@ def snap_a_to_b():
         return
     a = selection[1]
     b = selection[0]
-    copy_matrix = cmds.xform(a, query=True, matrix=True, ws=True)
-    cmds.xform(b, matrix=list(copy_matrix), ws=True)
+    a_matrix = cmds.xform(a, query=True, matrix=True, ws=True)
+    cmds.xform(b, matrix=list(a_matrix), ws=True)
+
