@@ -27,7 +27,7 @@ from as_maya_tools.animation import attributes;attributes.reset_scale()
 ```
 Set scale on selected objects to default value
 
-### reset sselected attributes
+### reset selected attributes
 ```
 from as_maya_tools.animation import attributes;attributes.reset_selected_attributes()
 ```
