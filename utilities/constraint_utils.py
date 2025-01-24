@@ -101,9 +101,11 @@ def get_parent_connected_constraints(node):
         if shape_node_connections:
             connections = connections + shape_node_connections
             connections = set(connections)
-            connections.remove('{0}.worldMesh'.format(shape))
+            if '{0}.worldMesh'.format(shape) in connections:
+                connections.remove('{0}.worldMesh'.format(shape))
 
-    connections.remove('pCube1.parentMatrix')
+    if '{0}.parentMatrix'.format(node) in connections:
+        connections.remove('{0}.parentMatrix'.format(node))
     connected_constraints = []
     for item in set(connections):
         if cmds.nodeType(item) == "parentConstraint":
