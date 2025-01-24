@@ -1,6 +1,6 @@
 # as_maya_tools
 ## Summary:
-veriety of scripts and tools to speedup animation workflow in maya
+variety of scripts and tools to speedup animation workflow in maya
 
 ## Tool List
 ### reset transforms
@@ -27,7 +27,7 @@ from as_maya_tools.animation import attributes;attributes.reset_scale()
 ```
 Set scale on selected objects to default value
 
-### reset sselected attributes
+### reset selected attributes
 ```
 from as_maya_tools.animation import attributes;attributes.reset_selected_attributes()
 ```
