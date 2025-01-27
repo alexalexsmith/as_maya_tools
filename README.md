@@ -4,7 +4,7 @@ variety of scripts and tools to speedup animation workflow in maya
 
 # Tool List
 
-## Atributes
+## Attributes
 ### reset transforms
 Set transforms on selected objects to default value
 ```
