@@ -11,3 +11,4 @@ def get_user_scripts_folder():
     return mayas_scripts
 
 USER_DATA_PATH = "{0}as_maya_tools_user_data".format(get_user_scripts_folder())
+
