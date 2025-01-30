@@ -17,8 +17,13 @@ def create_locator_at_selected():
         cmds.xform(locator, matrix=list(selected_node_matrix), ws=True)
 
 
-def lock_selected_in_place():
-    """toggle lock and unlock selected controls in place. only works per frame"""
+# TODO: I want to add options to exclude certain transform attributes, allowing for things like rolling in place
+def lock_selected_in_place(rotation=True, location=True):
+    """
+    toggle lock and unlock selected controls in place. only works per frame
+    :param bool rotation: Lock rotation
+    :param bool location: Lock location
+    """
 
     # remove lock in place
     if cmds.objExists("lock_in_place_locator"):
@@ -37,7 +42,18 @@ def lock_selected_in_place():
     selection = cmds.ls(selection=True)
     lock_in_place_locator = cmds.spaceLocator(name="lock_in_place_locator")
     for item in selection:
-        constraint_utils.create_parent_constraint(
-            parent=lock_in_place_locator,
-            child=item,
-            maintain_offset=True)
+        if rotation and location:
+            constraint_utils.create_parent_constraint(
+                parent=lock_in_place_locator,
+                child=item,
+                maintain_offset=True)
+        if rotation and not location:
+            constraint_utils.create_orient_constraint(
+                parent=lock_in_place_locator,
+                child=item,
+                maintain_offset=True)
+        if not rotation and location:
+            constraint_utils.create_point_constraint(
+                parent=lock_in_place_locator,
+                child=item,
+                maintain_offset=True)

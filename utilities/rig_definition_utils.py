@@ -9,7 +9,7 @@ from maya import cmds
 from as_maya_tools import USER_DATA_PATH
 
 # based on AdvancedSkeleton rig builds https://animationstudios.com.au/
-DEFAULT_RIG_SELECTION_CONTEXT = \
+DEFAULT_RIG_DEFINITION_CONTEXT = \
     {
         "node_types": ("nurbsCurve", "objectSet"),
         "all": ("ControlSet", "FaceControlSet"),
@@ -47,11 +47,13 @@ class RigControl(object):
     Rig control object
     """
 
-    def __init__(self, rig_context, node):
+    def __init__(self, rig_context=None, node=None):
         """
         :param dict rig_context: rig context dictionary
         :param str node: name of the control node
         """
+        if rig_context is None:
+            rig_context = DEFAULT_RIG_DEFINITION_CONTEXT
         self.rig_context = rig_context
         self.full_name = node
         self.name = None
@@ -224,7 +226,7 @@ def get_rig_control_object(rig_context, node, **kwargs):
     for exclusion_name in rig_context["exclude"]:
         if exclusion_name in node:
             return None
-    return RigControl(rig_context, node)
+    return RigControl(rig_context=rig_context, node=node)
 
 
 def get_rig_context_path(**kwargs):
@@ -246,4 +248,4 @@ def get_selection_rig_context(rig_context="default", **kwargs):
     """
     if rig_context == "default":
         # create user data directories
-        return DEFAULT_RIG_SELECTION_CONTEXT
+        return DEFAULT_RIG_DEFINITION_CONTEXT
