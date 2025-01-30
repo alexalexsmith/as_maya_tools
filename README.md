@@ -118,3 +118,17 @@ Select set of controls the current selection belongs to. Requires rig context de
 ```
 from as_maya_tools.animation import rig_selection;rig_selection.select_set()
 ```
+
+### create temp selection set
+Create an overwritable selection set
+```
+from as_maya_tools.animation import rig_selection;rig_selection.create_temp_selection_set()
+```
+
+### select temp selection set
+Select the items in a selection set created using the create temp selection set command. Selection is namespace agnostic. 
+The tool will use any and all namespaces in the current selection. If nothing is selected, the stored namespace will be used.
+nodes in the selection set without a namespace will be added either way
+```
+from as_maya_tools.animation import rig_selection;rig_selection.select_temp_selection_set()
+```
