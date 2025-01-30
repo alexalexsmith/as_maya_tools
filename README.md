@@ -1,6 +1,18 @@
 # as_maya_tools
 ## Summary:
 variety of scripts and tools to speedup animation workflow in maya
+## How To Use:
+Place as_maya_tools in your maya scripts folder. Use any of the below commmands to use the script or tool.
+If you want to use a tool in a marking menu or run it through mel for any reason, wrap the command with the mel command python("")
+example:
+```
+python("from as_maya_tools.animation import attributes;attributes.reset_transforms()")
+```
+See mel documentation for more information on the python() command
+https://help.autodesk.com/cloudhelp/2024/ENU/Maya-Tech-Docs/Commands/python.html
+
+## Contact:
+If you need help with anything you can send an email to alex.animationtd@gmail.com
 
 # Tool List
 
@@ -30,7 +42,7 @@ from as_maya_tools.animation import attributes;attributes.reset_scale()
 ```
 
 ### reset selected attributes
-Set atributes selected in the channelbox to default value
+Set attributes selected in the channelbox to default value
 ```
 from as_maya_tools.animation import attributes;attributes.reset_selected_attributes()
 ```
@@ -67,7 +79,7 @@ Create locator(s) on selected object(s)
 from as_maya_tools.animation import quick_scripts;quick_scripts.create_locator_at_selected()
 ```
 
-### locked selected in place
+### lock selected in place
 Lock selected object(s) in place
 ```
 from as_maya_tools.animation import quick_scripts;quick_scripts.lock_selected_in_place()
