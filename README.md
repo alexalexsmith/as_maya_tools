@@ -2,7 +2,7 @@
 ## Summary:
 variety of scripts and tools to speedup animation workflow in maya
 ## How To Use:
-Place as_maya_tools in your maya scripts folder. Use any of the below commmands to use the script or tool.
+Place as_maya_tools in your maya scripts folder. run any of the below python commands to use the script or tool.
 If you want to use a tool in a marking menu or run it through mel for any reason, wrap the command with the mel command python("")
 example:
 ```
