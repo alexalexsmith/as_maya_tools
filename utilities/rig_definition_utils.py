@@ -6,7 +6,11 @@ import re
 
 from maya import cmds
 
+from as_maya_tools.utilities import json_utils
 from as_maya_tools import USER_DATA_PATH
+
+
+RIG_DEFINITION_CONTEXT_PATH = "{0}/RIG_DEFINITION_CONTEXTS".format(USER_DATA_PATH)
 
 # based on AdvancedSkeleton rig builds https://animationstudios.com.au/
 DEFAULT_RIG_DEFINITION_CONTEXT = \
@@ -229,23 +233,26 @@ def get_rig_control_object(rig_context, node, **kwargs):
     return RigControl(rig_context=rig_context, node=node)
 
 
-def get_rig_context_path(**kwargs):
+def get_default_rig_context(**kwargs):
     """
-    get the rig selection context path where all rig context files are to be stored
-    Create the directory if it doesn't exist
+    get the default rig context
+    :return dict rig_context: default rig context dictionary
     """
-    rig_selection_context = os.path.join(USER_DATA_PATH, "rig_selection_context")
-    if not os.path.exists(rig_selection_context):
-        os.makedirs(rig_selection_context)
-    return rig_selection_context
+    rig_context = json_utils.read_offset_json_file(RIG_DEFINITION_CONTEXT_PATH, "default")
+    if rig_context is None:
+        json_utils.write_json_file(RIG_DEFINITION_CONTEXT_PATH, "default", DEFAULT_RIG_DEFINITION_CONTEXT)
+    rig_context = json_utils.read_offset_json_file(RIG_DEFINITION_CONTEXT_PATH, "default")
+    return rig_context
 
 
-def get_selection_rig_context(rig_context="default", **kwargs):
+def get_selection_rig_context(file_name="default", **kwargs):
     """
-    get the selection rig context
-    :param rig_context: string representing the rig context to be retrieved
+    get the rig definition context dict
+    :param file_name: string representing the rig context to be retrieved
     :return dict rig_context: rig context dictionary
     """
-    if rig_context == "default":
-        # create user data directories
-        return DEFAULT_RIG_DEFINITION_CONTEXT
+    rig_context = json_utils.read_offset_json_file(RIG_DEFINITION_CONTEXT_PATH, file_name)
+    if rig_context is None:
+        # Use the default rig context if the passed context doesn't exist
+        rig_context = get_default_rig_context()
+    return rig_context
