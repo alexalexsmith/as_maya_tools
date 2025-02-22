@@ -16,6 +16,9 @@ def get_maya_main_widget():
 
 
 class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow):
+    """
+    Abstract class to be subclassed for dockable windows in maya
+    """
 
     WINDOW_NAME = None
 
@@ -53,18 +56,25 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         self._ui()
 
     @classmethod
-    def load_ui(cls):
+    def load_ui(cls, dockable=True):
         """
         load the ui. close any existing instance of the window
         :return QMainWindow: returns window instance
         """
         # UI workspace Control needs to be deleted to create a new instance
-        try:
-            cmds.deleteUI("{0}WorkspaceControl".format(cls.Q_OBJECT_NAME))
-        except Exception as e:
-            pass
+        work_space_control = "{0}WorkspaceControl".format(cls.Q_OBJECT_NAME)
+        if cmds.workspaceControl(work_space_control, q=True, exists=True):
+            cmds.workspaceControl(work_space_control, e=True, close=True)
+            cmds.deleteUI(work_space_control, control=True)
+
+        maya_window = get_maya_main_widget()
+        for qt_object in maya_window.children():
+            if not isinstance(qt_object, QtWidgets.QWidget):
+                continue
+            if qt_object.windowTitle() == cls.WINDOW_NAME:
+                qt_object.close()
         ui = cls()
-        ui.show(dockable=True)
+        ui.show(dockable=dockable)
         ui.raise_()
         return ui
 
