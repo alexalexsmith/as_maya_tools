@@ -19,9 +19,8 @@ def get_selected_key_range():
     """
     Returns the range of selected keys in the timeline
     """
-    selected_keys = mel.eval("$constraint_manager_time_slider = $gPlayBackSlider")
-    cmds.timeControl(selected_keys, query=True, rangeArray=True)
-    return cmds.timeControl(selected_keys, query=True, rangeArray=True)
+    time_slider = mel.eval("$constraint_manager_time_slider = $gPlayBackSlider")
+    return cmds.timeControl(time_slider, query=True, rangeArray=True)
 
 
 def set_playback_range(start, end):

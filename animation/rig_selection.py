@@ -80,3 +80,27 @@ def _select_nodes(nodes, visible=False, **kwargs):
         cmds.select(nodes, add=True, visible=True)
     else:
         cmds.select(nodes, add=True)
+
+
+def copy_animation():
+    """
+    Copy animation from the timeline. This function uses the rig definition context to store animation
+    """
+    return
+
+
+def paste_animation():
+    """
+    Paste animation from the timeline. This function uses the rig definition context to restore animation.
+    This function will try to apply animation to the correct controls when mirror controls are selected
+    """
+    return
+
+
+def mirror_animation():
+    """
+    Mirror animation. This function uses the rig definition context to mirror animation
+    Objects outside of rig definition will have their transforms flipped
+    If only 1 side is selected (eg just left side) Only the transforms will flip
+    """
+    return

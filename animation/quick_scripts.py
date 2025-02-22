@@ -18,11 +18,10 @@ def create_locator_at_selected():
 
 
 # TODO: I want to add options to exclude certain transform attributes, allowing for things like rolling in place
-def lock_selected_in_place(rotation=True, location=True):
+def lock_selected_in_place(**kwargs):
     """
     toggle lock and unlock selected controls in place. only works per frame
-    :param bool rotation: Lock rotation
-    :param bool location: Lock location
+    see utilites.constraint_utils for kwargs for constraints
     """
 
     # remove lock in place
@@ -42,18 +41,9 @@ def lock_selected_in_place(rotation=True, location=True):
     selection = cmds.ls(selection=True)
     lock_in_place_locator = cmds.spaceLocator(name="lock_in_place_locator")
     for item in selection:
-        if rotation and location:
-            constraint_utils.create_parent_constraint(
-                parent=lock_in_place_locator,
-                child=item,
-                maintain_offset=True)
-        if rotation and not location:
-            constraint_utils.create_orient_constraint(
-                parent=lock_in_place_locator,
-                child=item,
-                maintain_offset=True)
-        if not rotation and location:
-            constraint_utils.create_point_constraint(
-                parent=lock_in_place_locator,
-                child=item,
-                maintain_offset=True)
+        constraint_utils.create_parent_constraint(
+            parent=lock_in_place_locator,
+            child=item,
+            maintain_offset=True,
+            **kwargs
+        )

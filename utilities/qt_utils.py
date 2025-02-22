@@ -21,10 +21,12 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
 
     Q_OBJECT_NAME = None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *args, **kwargs):
         super(DockableMainWindowAbstract, self).__init__(parent)
-        self.setWindowTitle(self.WINDOW_NAME) |
+        self.setWindowTitle(self.WINDOW_NAME)
         self.setObjectName(self.Q_OBJECT_NAME)
+
+        self._init_ui(*args, **kwargs)
 
     def closeEvent(self, event):
         """
@@ -32,6 +34,23 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         """
         super(DockableMainWindowAbstract, self).closeEvent(event)
         self.deleteLater()
+
+    def _ui(self):
+        """
+        UI widget to be implemented in subclass
+        """
+        return NotImplemented
+
+    def _init_ui(self, *args, **kwargs):
+        """initialize the ui"""
+        self._central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(self._central_widget)
+        self._central_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self._main_layout = QtWidgets.QVBoxLayout()
+        self._central_widget.setLayout(self._main_layout)
+        self._main_layout.setStretch(1, 1)
+
+        self._ui()
 
     @classmethod
     def load_ui(cls):
