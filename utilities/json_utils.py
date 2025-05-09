@@ -31,4 +31,3 @@ def read_offset_json_file(file_path, file_name):
     with open(json_file_path) as json_data:
         json_file_contents = json.load(json_data)
     return json_file_contents
-

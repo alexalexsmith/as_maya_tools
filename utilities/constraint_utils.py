@@ -113,6 +113,8 @@ def get_parent_connected_constraints(node):
     return connected_constraints
 
 
+
+
 def get_locked_transforms(item):
     """get locked transforms of passed item
     :param str item: name of object to check

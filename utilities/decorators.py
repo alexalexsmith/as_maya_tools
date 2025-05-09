@@ -72,4 +72,3 @@ def undoable_chunk(func):
             cmds.undoInfo(closeChunk=True)
 
     return _wrapper_undoable_chunk
-

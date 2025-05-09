@@ -4,15 +4,17 @@ Motion trails scripts
 
 from maya import cmds, mel
 
+from as_maya_tools.utilities import timeline_utils
+
 
 def create():
     """Create a standard motion trail on the selected objects"""
     selected_nodes = cmds.ls(selection=True)
     if not selected_nodes:
         return
-
-    mel.eval(
-        "snapshot  -motionTrail 1  -increment 1 -startTime `playbackOptions -query -min` -endTime `playbackOptions -query -max`;")
+    frame_range = get_timeline_range()
+    motion_trail = cmds.snapshot(motionTrail=1, increment=1, startTime=frame_range[0], endTime=frame_range[1], n="motionTrail_")
+    #mel.eval("snapshot  -motionTrail 1  -increment 1 -startTime `playbackOptions -query -min` -endTime `playbackOptions -query -max`;")
 
     all_model_panels = cmds.getPanel(type='modelPanel')
     for model_panel in all_model_panels:
@@ -53,4 +55,16 @@ def select():
 def delete():
     """delete all motion trails"""
     cmds.delete("motionTrail*")
-
+    
+    
+def get_timeline_range():
+    """
+    Get the time line range for the motion trail creation
+    If a range of keys are selected use that range else use timeslider range
+    """
+    frame_range = timeline_utils.get_selected_key_range()
+    print("selected range is {0}".format(frame_range))
+    if frame_range[1]-frame_range[0] == 1:
+        frame_range = timeline_utils.get_playback_range()
+        print("timeline range is {0}".format(frame_range))
+    return frame_range

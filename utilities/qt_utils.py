@@ -26,6 +26,8 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
     WINDOW_NAME = None
 
     Q_OBJECT_NAME = None
+    
+    STYLE_SHEET_PATH = None
 
     def __init__(self, parent=None, *args, **kwargs):
         super(DockableMainWindowAbstract, self).__init__(parent)
@@ -35,7 +37,19 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         self.setObjectName(self.Q_OBJECT_NAME)
 
         self._init_ui(*args, **kwargs)
+        
         self._setup_socket_connections()
+        self._set_style_sheet(self.STYLE_SHEET_PATH)
+        
+    def _set_style_sheet(self):
+        """set the style sheet"""
+        if self.STYLE_SHEET_PATH is None:
+            return
+            
+        file = QtCore.QFile(self.STYLE_SHEET_PATH)
+        file.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text)
+        stream = QtCore.QTextStream(file)
+        self.setStyleSheet(stream.readAll())
 
     def closeEvent(self, event):
         """
@@ -67,9 +81,9 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         self._central_widget = QtWidgets.QWidget()
         self.setCentralWidget(self._central_widget)
         self._central_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self._main_layout = QtWidgets.QVBoxLayout()
-        self._central_widget.setLayout(self._main_layout)
-        self._main_layout.setStretch(1, 1)
+        self.main_layout = QtWidgets.QVBoxLayout()
+        self._central_widget.setLayout(self.main_layout)
+        self.main_layout.setStretch(1, 1)
 
         self._ui()
 
@@ -193,4 +207,44 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         ui.show(dockable=dockable)
         ui.raise_()
         return ui
+        
+        
+class TreeWidgetRightClickSupportAbstract(QtWidgets.QTreeWidget):
+    """
+    Custom Tree Widget With default right click menu support
+    """
 
+    HEADER_LABELS = None
+    FONT = "Verdana"
+    FONT_SIZE = 10
+
+    def __init__(self, parent=None, *args, **kwargs):
+        super(TreeWidgetRightClickSupportAbstract, self).__init__(parent=parent, *args, **kwargs)
+        #self.setFont(QtGui.QFont(self.FONT, self.FONT_SIZE, QtGui.QFont.Bold))
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.setHeaderLabels(self.HEADER_LABELS)
+        self.setAlternatingRowColors(True)
+        self._init_popup_menu()
+
+    def _init_popup_menu(self):
+        """Build Main UI elements"""
+        #  NOTE: creates the connections for popup menus
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_popup)
+        #  NOTE: Init a popup menu
+        self.popup_menu = QtWidgets.QMenu()
+        self._pop_up_menu()
+
+    def _pop_up_menu(self):
+        """
+        Create custom pop up menu
+        """
+        return NotImplemented
+
+    def show_popup(self, position):
+        """
+        Shows Custom Popup menus for User
+
+        :param QPosition position: passed by signal where to display popup
+        """
+        _value = self.popup_menu.exec_(self.mapToGlobal(position))

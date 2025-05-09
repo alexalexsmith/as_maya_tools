@@ -54,6 +54,9 @@ class Attribute(object):
 
     def is_keyable(self):
         return cmds.getAttr(self.attribute_path, keyable=True)
+        
+    def is_locked(self):
+        return cmds.getAttr(self.attribute_path, locked=True)
 
     def get_default_value(self):
         """
@@ -61,6 +64,36 @@ class Attribute(object):
         NOTE: This cmd returns a list. using [0] to return a single value
         """
         return cmds.attributeQuery(self.attribute, node=self.node, listDefault=True)[0]
+        
+    def get_value(self):
+        """
+        get the current value
+        """
+        return cmds.getAttr(self.attribute_path)
+        
+    def get_enum_values(self):
+        """
+        get all available enum values
+        """
+        if self.type != "enum":
+            cmds.warning("{0} is not an enum attribute".format(self.attribute_path))
+            return
+        return cmds.attributeQuery(self.attribute, node=self.node, listEnum=True)
+        
+    def get_minimum(self):
+        """
+        Return the minimum value
+        """
+        return cmds.attributeQuery(self.attribute, node=self.node, minimum=True)[0]
+        
+    def get_maximum(self):
+        """
+        Return the maximum value
+        """
+        return cmds.attributeQuery(self.attribute, node=self.node, maximum=True)[0]
 
     def set_value(self, value):
-        cmds.setAttr(self.attribute_path, value)
+        try:
+            cmds.setAttr(self.attribute_path, value)
+        except Exception as e:
+            cmds.warning("Attempt to set attribute was aborted:{0}".format(e))

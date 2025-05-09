@@ -7,10 +7,9 @@ import re
 from maya import cmds
 
 from as_maya_tools.utilities import json_utils
-from as_maya_tools import USER_DATA_PATH
+from as_maya_tools import RIG_DEFINITION_CONTEXT_PATH
 
 
-RIG_DEFINITION_CONTEXT_PATH = "{0}/RIG_DEFINITION_CONTEXTS".format(USER_DATA_PATH)
 
 # based on AdvancedSkeleton rig builds https://animationstudios.com.au/
 DEFAULT_RIG_DEFINITION_CONTEXT = \
@@ -98,12 +97,33 @@ class RigControl(object):
                 if subset_definition in self.name:
                     self.subset = subset
                     break
+                    
+    def is_visible(self):
+        """
+        return if the control is visible
+        """
+        #vis attribute, parents vis attr, display layers, parents display layers
+        if not cmds.getAttr("{0}.visibility".format(self.full_name)):
+            return False
+        if not cmds.getAttr("{0}.lodVisibility".format(self.full_name)):
+            return False
+        return True
+        
+    def is_keyed(self):
+        """
+        return if the control has keyframes
+        """
+        if cmds.keyframe(self.full_name, query=True, keyframeCount=True) > 0:
+            return True
+        return False
+        
+    
 
 
 def get_all_controls(**kwargs):
     """
     get all controls based on selection and rig context
-    TODO: implement ability to determine context of rig based on selected node
+    TODO: If it's a set node we need to return the list of controls to filter based on rig selection settings
     :return list[str] all_controls: list of all control node names, or a set node containing all controls
     """
     rig_context = get_selection_rig_context(**kwargs)
@@ -122,10 +142,16 @@ def get_all_controls(**kwargs):
                     continue
                 all_controls.append(control_to_add)
         else:
-            if not cmds.objExists(rig_context["all"]):
-                continue
-            all_controls.append(rig_context["all"])
-    return all_controls
+            for node_name in rig_context["all"]:
+                if not cmds.objExists(node_name):
+                    continue
+                all_controls.append(node_name)
+    # Use the rig control object to filter controls based on settings
+    rig_control_objects = get_rig_control_objects_from_list(rig_context, all_controls, **kwargs)
+    filtered_all_controls=[]
+    for rig_control_object in rig_control_objects:
+        filtered_all_controls.append(rig_control_object.full_name)
+    return filtered_all_controls
 
 
 def get_mirror_controls(**kwargs):
@@ -162,7 +188,7 @@ def get_mirror_controls(**kwargs):
     return mirror_controls
 
 
-def get_set_controls(ignore_side=False, **kwargs):
+def get_set_controls(ignore_side=False, subset_filter=False, **kwargs):
     """
     get set controls based on selection and rig context
     :param bool ignore_side: ignore side when checking for set controls
@@ -182,13 +208,21 @@ def get_set_controls(ignore_side=False, **kwargs):
         else:
             rig_control = get_rig_control_object(rig_context, control, **kwargs)
             if rig_control:
-                rig_controls.append(rig_control)
+                all_controls.append(rig_control)
     # create a list of controls belonging to the same set as the initial selection
     set_controls = []
     for rig_control in rig_controls:
         for control in all_controls:
+            # subset filter
+            if subset_filter:
+                if not control.subset:
+                    pass
+                if not control.subset == rig_control.subset:
+                    continue
+            # set filter
             if not control.set == rig_control.set:
                 continue
+            # ignore side filter
             if not ignore_side:
                 if rig_control.side == control.side:
                     set_controls.append(control.full_name)
@@ -213,7 +247,7 @@ def get_rig_control_objects_from_list(rig_context, nodes, **kwargs):
     return rig_controls
 
 
-def get_rig_control_object(rig_context, node, **kwargs):
+def get_rig_control_object(rig_context, node, visible=False, keyed=False, **kwargs):
     """
     Get a single rig control object. pass each node through a set of filters
     :param dict rig_context: rig context dictionary
@@ -230,6 +264,16 @@ def get_rig_control_object(rig_context, node, **kwargs):
     for exclusion_name in rig_context["exclude"]:
         if exclusion_name in node:
             return None
+    # filter rig control based on rig_selection_settings
+    rig_control = RigControl(rig_context=rig_context, node=node)
+    # visible filter
+    if visible:
+        if not rig_control.is_visible():
+            return None
+    # keyed filter
+    if keyed:
+        if not rig_control.is_keyed():
+            return None
     return RigControl(rig_context=rig_context, node=node)
 
 
@@ -245,13 +289,13 @@ def get_default_rig_context(**kwargs):
     return rig_context
 
 
-def get_selection_rig_context(file_name="default", **kwargs):
+def get_selection_rig_context(rig_definition_context="default", **kwargs):
     """
     get the rig definition context dict
     :param file_name: string representing the rig context to be retrieved
     :return dict rig_context: rig context dictionary
     """
-    rig_context = json_utils.read_offset_json_file(RIG_DEFINITION_CONTEXT_PATH, file_name)
+    rig_context = json_utils.read_offset_json_file(RIG_DEFINITION_CONTEXT_PATH, rig_definition_context)
     if rig_context is None:
         # Use the default rig context if the passed context doesn't exist
         rig_context = get_default_rig_context()
