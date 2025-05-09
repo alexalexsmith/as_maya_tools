@@ -17,6 +17,12 @@ If you need help with anything you can send an email to alex.animationtd@gmail.c
 # Tool List
 
 ## Attributes
+### noise settings ui
+Ui for generating noise on attributes selected in the main channel box across keyframes selected in the timeline
+```
+from as_maya_tools.interface import noise_settings_ui;noise_settings_ui_instance = noise_settings_ui.NoiseGenerationSettingsUI.load_ui()
+```
+
 ### reset transforms
 Set transforms on selected objects to default value
 ```
@@ -85,6 +91,12 @@ Lock selected object(s) in place
 from as_maya_tools.animation import quick_scripts;quick_scripts.lock_selected_in_place()
 ```
 
+### attach_locator_to_selection
+attach a locator to the selected transform or vertex
+```
+from as_maya_tools.animation import quick_scripts;quick_scripts.attach_locator_to_selection()
+```
+
 ## Snapping
 ### snap a to b
 Snap first selection to second selection
@@ -100,6 +112,12 @@ from as_maya_tools.animation import timeline;timeline.set_playbackslider_to_sele
 ```
 
 ## Rig Selection
+### rig selection settings ui
+UI for managing selection settings
+```
+from as_maya_tools.interface import rig_selection_settings_ui;rig_selection_settings_ui_instance = rig_selection_settings_ui.RigSelectionSettingsUI.load_ui()
+```
+
 ### select all
 Select all controls on a rig. Requires rig context definition .json file 
 ```
