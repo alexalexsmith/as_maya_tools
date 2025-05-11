@@ -17,6 +17,12 @@ If you need help with anything you can send an email to alex.animationtd@gmail.c
 # Tool List
 
 ## Attributes
+### attribute switcher ui
+Ui for switching attributes while maintaining the objects transform position. Also knows as a spaceswitch tool
+```
+from as_maya_tools.interface import attribute_switcher_ui;attribute_switcher_ui_instance = attribute_switcher_ui.AttributeSwitcherUI.load_ui()
+```
+
 ### noise settings ui
 Ui for generating noise on attributes selected in the main channel box across keyframes selected in the timeline
 ```
