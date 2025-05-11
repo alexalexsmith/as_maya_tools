@@ -26,7 +26,30 @@ class CustomQFrame(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super(CustomQFrame, self).__init__(parent)
         self.setFrameStyle(QtWidgets.QFrame.StyledPanel | QtWidgets.QFrame.Plain)
-        
+
+
+class AttributeTreeWidgetItem(QtWidgets.QTreeWidgetItem):
+    """
+    Treewidgetitem for displaying loaded attributes
+    """
+    def __init__(self, attribute_path=None, attribute_control=None, parent=None):
+        super(AttributeTreeWidgetItem, self).__init__(parent)
+        self.attribute_path = attribute_path
+        self.attribute_control = attribute_control
+
+    def get_attribute_control_value(self):
+        """
+        get the attribute controls current value
+        """
+        if isinstance(self.attribute_control, QtWidgets.QDoubleSpinBox):
+            return self.attribute_control.value()
+        if isinstance(self.attribute_control, QtWidgets.QSpinBox):
+            return self.attribute_control.value()
+        if isinstance(self.attribute_control, QtWidgets.QCheckBox):
+            return self.attribute_control.isChecked()
+        if isinstance(self.attribute_control, QtWidgets.QComboBox):
+            return self.attribute_control.currentIndex()
+
 
 class AttributeTreeWidget(TreeWidgetRightClickSupportAbstract):
     """
@@ -38,17 +61,24 @@ class AttributeTreeWidget(TreeWidgetRightClickSupportAbstract):
         """
         Create custom pop up menu
         """
+        self.attributes = []
         self.load_attribute = self.popup_menu.addAction("Load Attribute")
         self.Remove_attribute = self.popup_menu.addAction("Remove Attribute")
         
-        
     def add_attribute_item(self, attribute_path):
         """add the tree view item to this tree view widget"""
+        for attribute in self.attributes:
+            if attribute_path == attribute.attribute_path:
+                return
         attribute_control = self.get_attribute_control(attribute_path)
         if attribute_control:
-            qtree_item =QtWidgets.QTreeWidgetItem(self)
+            qtree_item = AttributeTreeWidgetItem(
+                parent=self,
+                attribute_path=attribute_path,
+                attribute_control=attribute_control)
             qtree_item.setText(0, attribute_path)
-            self.setItemWidget(qtree_item, 1, attribute_control)
+            self.setItemWidget(qtree_item, 1, qtree_item.attribute_control)
+            self.attributes.append(qtree_item)
             
     def remove_attribute_item(self):
         """
@@ -58,8 +88,8 @@ class AttributeTreeWidget(TreeWidgetRightClickSupportAbstract):
             return
         for item in self.selectedItems():
             item.setHidden(True)
-            #self.removeItemWidget(item, 1)
-            
+            self.attributes.remove(item)
+
     def get_attribute_control(self, attribute_path):
         """
         Get the appropriate widget for the attribute
@@ -89,7 +119,7 @@ class AttributeTreeWidget(TreeWidgetRightClickSupportAbstract):
             enum_values = attribute_object.get_enum_values()
             for enum_value in enum_values:
                 attribute_control.addItem(enum_value)
-            attribute_control.setValue(attribute_object.get_value())
+            attribute_control.setCurrentIndex(attribute_object.get_value())
             
         return attribute_control
             
@@ -106,7 +136,6 @@ class AttributeSwitcherUI(DockableMainWindowAbstract):
     
     def __init__(self, parent=None):
         super(AttributeSwitcherUI, self).__init__(parent)
-        
 
     def _ui(self):
         """
@@ -130,8 +159,7 @@ class AttributeSwitcherUI(DockableMainWindowAbstract):
         self.main_layout.addWidget(self.switch_button)
         
         self.setLayout(self.main_layout)
-       
-        
+
     def _setup_socket_connections(self):
         """
         setup socket connections
@@ -141,8 +169,9 @@ class AttributeSwitcherUI(DockableMainWindowAbstract):
         
         self.attribute_tree_widget.load_attribute.triggered.connect(self._callback_load_attributes)
         self.attribute_tree_widget.Remove_attribute.triggered.connect(self.attribute_tree_widget.remove_attribute_item)
-            
-            
+
+        self.switch_button.clicked.connect(self._callback_space_switch)
+
     def _callback_load_attributes(self):
         """
         Load attributes from based on selection
@@ -158,14 +187,12 @@ class AttributeSwitcherUI(DockableMainWindowAbstract):
                     continue
                 self.attribute_tree_widget.add_attribute_item(attribute_path)    
         return
-        
-        
-def space_switch(node, attribute, value, frame_range):
-    """
-    space switching function
-    :param str node: name of node to space switch 
-    :param str attribute: attribute to value change
-    :param str value: new value to set attribute to
-    :param str frame_range: frame range to run spaceswitch on 
-    """
-    return
+
+    def _callback_space_switch(self):
+        """
+        space switch all loaded attributes
+        """
+        for attribute_item in self.attribute_tree_widget.attributes:
+            attribute_utils.space_switch(
+                attribute_item.attribute_path,
+                attribute_item.get_attribute_control_value())

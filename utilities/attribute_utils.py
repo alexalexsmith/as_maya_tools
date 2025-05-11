@@ -78,22 +78,44 @@ class Attribute(object):
         if self.type != "enum":
             cmds.warning("{0} is not an enum attribute".format(self.attribute_path))
             return
-        return cmds.attributeQuery(self.attribute, node=self.node, listEnum=True)
+        return cmds.attributeQuery(self.attribute, node=self.node, listEnum=True)[0].split(":")
         
     def get_minimum(self):
         """
         Return the minimum value
         """
-        return cmds.attributeQuery(self.attribute, node=self.node, minimum=True)[0]
+        if cmds.attributeQuery(self.attribute, node=self.node, minExists=True):
+            return cmds.attributeQuery(self.attribute, node=self.node, minimum=True)[0]
+        if self.type == "double":
+            return -99999.99
+        return -99999
         
     def get_maximum(self):
         """
         Return the maximum value
         """
-        return cmds.attributeQuery(self.attribute, node=self.node, maximum=True)[0]
+        if cmds.attributeQuery(self.attribute, node=self.node, maxExists=True):
+            return cmds.attributeQuery(self.attribute, node=self.node, maximum=True)[0]
+        if self.type == "double":
+            return 99999.99
+        return 99999
 
     def set_value(self, value):
         try:
             cmds.setAttr(self.attribute_path, value)
         except Exception as e:
             cmds.warning("Attempt to set attribute was aborted:{0}".format(e))
+
+
+def space_switch(attribute_path, value):
+    """
+    maintain transform position after changing an attribute.
+    :param str attribute_path:  attribute path
+    :param float/int value: new value to set attribute to
+    """
+    attribute = Attribute(attribute_path)
+    node = attribute.node
+
+    restore_matrix = cmds.xform(node, query=True, matrix=True, ws=True)
+    attribute.set_value(value)
+    cmds.xform(node, matrix=restore_matrix, ws=True)
