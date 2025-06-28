@@ -5,6 +5,8 @@ from functools import wraps
 
 from maya import cmds
 
+from as_maya_tools.utilities import performance_utils
+
 
 def set_pref_anim_blend_with_existing_connections(func):
     """
@@ -72,3 +74,24 @@ def undoable_chunk(func):
             cmds.undoInfo(closeChunk=True)
 
     return _wrapper_undoable_chunk
+    
+    
+def maintain_selection(func):
+    """
+    Maintain the Original selection
+    """
+    def _wrapper_mantain_selection(*args, **kwargs):
+        selection = cmds.ls(selection=True)
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            raise  # will raise original error
+        finally:
+            if len(selection) == 0:
+                return
+            for item in selection:
+                if not performance_utils.obj_exists(item):
+                    return
+            cmds.select(selection, replace=True)
+                
+    return _wrapper_mantain_selection

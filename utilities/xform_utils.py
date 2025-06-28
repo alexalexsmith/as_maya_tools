@@ -6,7 +6,7 @@ from maya import cmds
 from as_maya_tools.utilities import attribute_utils
 
 
-def snap_a_to_b(a, b, translation=True, rotation=True, scale=False):
+def snap_a_to_b(a, b, translation=True, rotation=True, scale=False, **kwargs):
     """
     Snap node a to node b world position
     :param string a: name of node

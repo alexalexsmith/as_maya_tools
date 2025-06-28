@@ -97,3 +97,19 @@ def create_mmv_offset_controls():
                 maintain_offset=True)
             
             
+def create_control():
+    """
+    attach a control for each selected object. control will follow object
+    """
+    selection = cmds.ls(selection=True)
+    ctrl_normal_direction = (0, 1, 0)
+    for node in selection:
+        control_basename = node
+        if ":" in control_basename:
+            control_basename = node.split(":")[-1]
+        control = cmds.circle(name="{0}_ctrl".format(control_basename), nr=ctrl_normal_direction, r=4)
+        offset_group = cmds.group(control, name="{0}_offset".format(control_basename))
+        constraint_utils.create_parent_constraint(
+            parent=node,
+            child=offset_group,
+            maintain_offset=False)

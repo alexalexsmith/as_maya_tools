@@ -2,7 +2,12 @@
 User interface for managing rig selection options
 """
 import os
-from PySide2 import QtWidgets, QtCore, QtGui
+try:
+    from PySide2 import QtWidgets, QtCore, QtGui
+    from shiboken2 import wrapInstance
+except ModuleNotFoundError:
+    from PySide6 import QtWidgets, QtCore, QtGui
+    from shiboken6 import wrapInstance
 
 from as_maya_tools.utilities.qt_utils import DockableMainWindowAbstract
 from as_maya_tools.utilities import json_utils

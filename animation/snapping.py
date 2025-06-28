@@ -2,9 +2,10 @@
 snapping scripts
 """
 from maya import cmds
+from as_maya_tools.utilities import xform_utils
 
 
-def snap_a_to_b(translation=True, rotation=True, scale=False):
+def snap_a_to_b(translation=True, rotation=True, scale=False, **kwargs):
     """
     snap first selected object to second selected object
     """
@@ -12,19 +13,9 @@ def snap_a_to_b(translation=True, rotation=True, scale=False):
     if len(selection) < 2:
         print("select 2 items to snap")
         return
-    snap_to_node = selection[-1]
-    for node in selection:
-        if node == snap_to_node:
+    b = selection[-1]
+    for a in selection:
+        if a == b:
             return
-        
-        if translation:
-            snap_to_matrix = cmds.xform(snap_to_node, query=True, translation=True, ws=True)
-            cmds.xform(node, translation=list(snap_to_matrix), ws=True)
-            
-        if rotation:
-            snap_to_matrix = cmds.xform(snap_to_node, query=True, rotation=True, ws=True)
-            cmds.xform(node, rotation=list(snap_to_matrix), ws=True)
-            
-        if scale:
-            snap_to_matrix = cmds.xform(snap_to_node, query=True, scale=True, ws=True)
-            cmds.xform(node, scale=list(snap_to_matrix), ws=True)
+        xform_utils.snap_a_to_b(a, b, translation=translation, rotation=rotation, scale=scale, **kwargs)
+

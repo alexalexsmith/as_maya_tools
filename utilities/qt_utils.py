@@ -1,6 +1,10 @@
 # TODO: add support for Pyside6 and shiboken6(maya 2025)
-from PySide2 import QtWidgets, QtCore, QtGui
-import shiboken2
+try:
+    from PySide2 import QtWidgets, QtCore, QtGui
+    from shiboken2 import wrapInstance
+except ModuleNotFoundError:
+    from PySide6 import QtWidgets, QtCore, QtGui
+    from shiboken6 import wrapInstance
 
 from maya import cmds
 import maya.OpenMayaUI as omui
@@ -12,7 +16,7 @@ def get_maya_main_widget():
     Get pointer to Maya's main window
     """
     maya_main_window_pointer = omui.MQtUtil.mainWindow()
-    return shiboken2.wrapInstance(int(maya_main_window_pointer), QtWidgets.QWidget)
+    return wrapInstance(int(maya_main_window_pointer), QtWidgets.QWidget)
 
 
 class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow):

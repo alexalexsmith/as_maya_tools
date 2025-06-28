@@ -1,7 +1,12 @@
 """
 User interface for managing noise generation options
 """
-from PySide2 import QtWidgets, QtCore, QtGui
+try:
+    from PySide2 import QtWidgets, QtCore, QtGui
+    from shiboken2 import wrapInstance
+except ModuleNotFoundError:
+    from PySide6 import QtWidgets, QtCore, QtGui
+    from shiboken6 import wrapInstance
 
 from as_maya_tools.utilities.qt_utils import DockableMainWindowAbstract
 from as_maya_tools.utilities import json_utils
@@ -71,7 +76,7 @@ class NoiseGenerationSettingsUI(DockableMainWindowAbstract):
         
         self.amplitude_label = QtWidgets.QLabel()
         self.amplitude_label.setText("Amplitude")
-        self.amplitude_spinbox = QtWidgets.QSpinBox(self)
+        self.amplitude_spinbox = QtWidgets.QDoubleSpinBox(self)
         self.amplitude_spinbox.setMaximum(999999)
         self.amplitude_spinbox.setMinimum(-999999)
         
@@ -133,7 +138,7 @@ class NoiseGenerationSettingsUI(DockableMainWindowAbstract):
         """        
         if settings is None:
             json_utils.write_json_file(NOISE_GENERATION_SETTINGS_PATH, "noise_generation_settings", DEFAULT_NOISE_GENERATION_SETTINGS)
-        settings = json_utils.read_offset_json_file(NOISE_GENERATION_SETTINGS_PATH, "noise_generation_settings")
+            settings = json_utils.read_offset_json_file(NOISE_GENERATION_SETTINGS_PATH, "noise_generation_settings")
         
         self.frame_range_combobox.setCurrentText(settings["frame_range"])
         

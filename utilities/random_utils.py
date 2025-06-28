@@ -5,10 +5,10 @@ import random
 
 from maya import cmds
 
-from as_maya_tools.utilities import performance_utils, attribute_utils
+from as_maya_tools.utilities import performance_utils, attribute_utils, decorators
 
 
-# get selected keys and attributes
+@decorators.undoable_chunk
 def generate_noise_on_attributes(nodes, attributes, keyframes, amplitude=1, frequency=1, seed=None, use_current_value=True, **kwargs):
     """
     Generate noise animation on selected objects
@@ -35,5 +35,5 @@ def generate_noise_on_attributes(nodes, attributes, keyframes, amplitude=1, freq
                 if use_current_value:
                 
                     # add the value to the current value
-                    random_number = cmds.getAttr("{0}.{1}".format(node, attribute)) + random_number
+                    random_number = cmds.getAttr("{0}.{1}".format(node, attribute),time=frame[0]) + random_number
                 cmds.setKeyframe(node, attribute=attribute, time=frame[0], value=random_number) # Because the keyframe list I am passing here is a list of lists. it's wonky but ok for now 

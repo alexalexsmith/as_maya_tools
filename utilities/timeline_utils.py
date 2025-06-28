@@ -29,3 +29,4 @@ def set_playback_range(start, end):
     Sets the playback range.
     """
     cmds.playbackOptions(edit=True, minTime=start), cmds.playbackOptions(edit=True, maxTime=end)
+    

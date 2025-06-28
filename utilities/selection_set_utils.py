@@ -6,10 +6,7 @@ import os
 from maya import cmds
 
 from as_maya_tools.utilities import json_utils
-from as_maya_tools import USER_DATA_PATH
-
-
-SELECTION_SET_DIRECTORY = "{0}/SELECTION_SETS".format(USER_DATA_PATH)
+from as_maya_tools import SELECTION_SET_DIRECTORY
 
 
 def create_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
@@ -33,6 +30,20 @@ def create_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
     if sub_folder:
         directory = os.path.join(directory, sub_folder)
     json_utils.write_json_file(directory, file_name, data)
+
+
+def create_selection_set_file():
+    """
+    create selection set file to store selection sets
+    """
+    return
+    
+    
+def create_selection_set_data():
+    """
+    create selection set data to store in a selection set file
+    """
+    return
 
 
 def get_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
@@ -80,3 +91,56 @@ def get_namespaces_from_nodes(nodes):
             namespace, _ = node.split(":")
             namespaces.append(namespace)
     return namespaces if len(namespaces) > 0 else None
+    
+    
+class SelectionSetFile(object):
+    """
+    Class for managing selection set files and their data
+    """
+    
+    def __init__(self, file_path):
+        """
+        init the selection set file
+        :param str file_path: path for selection set file 
+        """
+        self.file_path = file_path
+        
+    def create_file(self):
+        """
+        create the selection set file
+        """
+        directory = os.path.join(directory, sub_folder)
+        json_utils.write_json_file(directory, file_name, data)
+        
+        return
+        
+    def delete_file(self):
+        """
+        delete the selection set file
+        """
+        
+    def create_selection_set(self, selection_set):
+        """
+        Create a selection set
+        :param str selection_set: name of selection set to create
+        """
+        
+    def delete_selection_set(self, selection_set):
+        """
+        Create a selection set
+        :param str selection_set: name of selection set to create
+        """
+        
+    def add_selected_nodes_to_selection_set(self, selection_set):
+        """
+        Add nodes selected in viewport to passed selection set
+        :param str selection_set: name of selection set to add to
+        """
+        
+    def remove_selected_nodes_to_selection_set(self, selection_set):
+        """
+        Remove nodes selected in viewport to passed selection set
+        :param str selection_set: name of selection set to add to
+        """
+        
+    

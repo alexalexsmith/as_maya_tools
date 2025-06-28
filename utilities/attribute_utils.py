@@ -28,6 +28,30 @@ class Transform(object):
         self.translate = [self.translate_x, self.translate_y, self.translate_z]
         self.rotate = [self.rotate_x, self.rotate_y, self.rotate_z]
         self.scale = [self.scale_x, self.scale_y, self.scale_z]
+        
+    def get_translation(self, world_space = False):
+        """
+        Get the current translation as a Tuple (x,y,z)
+        """
+        if world_space:
+            return cmds.xform(self.transform_node, query=True, translation=True, ws=True)
+        return (self.translate_x.get_value(), self.translate_y.get_value(),self.translate_z.get_value())
+        
+    def get_rotation(self, world_space = False):
+        """
+        Get the curent rotation value as a Tuple (x,y,z)
+        """
+        if world_space:
+            return cmds.xform(self.transform_node, query=True, rotation=True, ws=True)
+        return (self.rotate_x.get_value(), self.rotate_y.get_value(),self.rotate_z.get_value())
+        
+    def get_scale(self, world_space = False):
+        """
+        Get the curent scale value as a Tuple (x,y,z)
+        """
+        if world_space:
+            return cmds.xform(self.transform_node, query=True, scale=True, ws=True)
+        return (self.scale_x.get_value(), self.scale_y.get_value(),self.scale_z.get_value())
 
 
 class Attribute(object):
@@ -56,7 +80,14 @@ class Attribute(object):
         return cmds.getAttr(self.attribute_path, keyable=True)
         
     def is_locked(self):
-        return cmds.getAttr(self.attribute_path, locked=True)
+        return cmds.getAttr(self.attribute_path, lock=True)
+        
+    def get_connections(self):
+        """
+        get a list incomming connections
+        """
+        # TODO: may need to filter out self in list
+        return cmds.listConnections(self.attribute_path, skipConversionNodes=True)
 
     def get_default_value(self):
         """
@@ -70,6 +101,12 @@ class Attribute(object):
         get the current value
         """
         return cmds.getAttr(self.attribute_path)
+        
+    def get_keyframes():
+        """
+        get any keyframes on the attribute
+        """
+        return cmds.keyframe(self.attribute, query=True, timeChange=True)
         
     def get_enum_values(self):
         """
@@ -105,17 +142,3 @@ class Attribute(object):
             cmds.setAttr(self.attribute_path, value)
         except Exception as e:
             cmds.warning("Attempt to set attribute was aborted:{0}".format(e))
-
-
-def space_switch(attribute_path, value):
-    """
-    maintain transform position after changing an attribute.
-    :param str attribute_path:  attribute path
-    :param float/int value: new value to set attribute to
-    """
-    attribute = Attribute(attribute_path)
-    node = attribute.node
-
-    restore_matrix = cmds.xform(node, query=True, matrix=True, ws=True)
-    attribute.set_value(value)
-    cmds.xform(node, matrix=restore_matrix, ws=True)
