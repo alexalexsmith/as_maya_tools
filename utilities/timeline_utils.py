@@ -10,7 +10,7 @@ def get_animation_range():
 
 def get_playback_range():
     """
-    Returns the playback range
+    Returns the time slider range
     """
     return [cmds.playbackOptions(q=True, minTime=True), cmds.playbackOptions(q=True, maxTime=True)]
 

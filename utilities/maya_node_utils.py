@@ -41,8 +41,8 @@ class MayaNode(object):
                 transform = test_transform[0]
         self.long_name = transform
         if ":" in self.long_name.split("|")[-1]:
-            self.namespace = self.long_name.split("|")[-1].split(":")[0]
-            self.short_name = self.long_name.split("|")[-1].split(":")[1]
+            self.namespace = self.long_name.split("|")[-1].rsplit(":", 1)[0]
+            self.short_name = self.long_name.split("|")[-1].rsplit(":", 1)[1]
         else:
             self.short_name = self.long_name.split("|")[-1]
         self.shape = shape

@@ -74,13 +74,13 @@ class RigControl(object):
         """init the name and namespace for the control"""
         self.name = self.full_name
         if ":" in self.full_name:
-            self.namespace, self.name = self.full_name.split(":")
+            self.namespace, self.name = self.full_name.rsplit(":", 1)
 
     def _init_side(self):
         """init the side of the control"""
-        side_match = re.match(self.rig_context["position"]["regrex"], self.name)
+        side_match = re.search(self.rig_context["position"]["regrex"], self.name)
         if side_match:
-            self.side = side_match.group(1)
+            self.side = side_match.group(0)
 
     def _init_set(self):
         """init the set the control belongs to"""
@@ -169,12 +169,13 @@ def get_mirror_controls(**kwargs):
             continue
         position_regrex_match = re.search(rig_context["position"]["regrex"], rig_control.name)
         if position_regrex_match:
-            side = position_regrex_match.group(1)
-            if side in (rig_context["position"]["side"])[0]:
-                side = (rig_context["position"]["side"])[1]
-            else:
-                side = (rig_context["position"]["side"])[0]
-            start, end = position_regrex_match.span(1)
+            side = rig_control.side
+            if "R" in rig_control.side:
+                side = rig_control.side.replace("R", "L")
+            if "L" in rig_control.side:
+                side = rig_control.side.replace("L", "R")
+                
+            start, end = position_regrex_match.span(0)
             mirror_name = "{0}{1}{2}".format(rig_control.name[:start], side, rig_control.name[end:])
             if rig_control.namespace:
                 control_to_add = "{0}:{1}".format(rig_control.namespace, mirror_name)
@@ -212,6 +213,8 @@ def get_set_controls(ignore_side=False, subset_filter=False, **kwargs):
     # create a list of controls belonging to the same set as the initial selection
     set_controls = []
     for rig_control in rig_controls:
+        if not rig_control.set:
+            continue
         for control in all_controls:
             # subset filter
             if subset_filter:

@@ -24,6 +24,8 @@ class JiggleRig(object):
         self.main_group = None # maya_node_utils.MayaNode: Group containing all jiggle rig nodes
         self.transform = None # attribute_utils.Transform: Node connected to jiggle rig
         self.transform_constraint = None # constraint connecting transform to jiggle rig
+        self.point_constraint = None # Point constraint
+        self.orient_constraint = None # Orient constraint
         self.jiggle_geometry = None # maya_node_utils.MayaNode: Geometry with jiggle deform applied
         self.jiggle_deform_node = None # maya_node_utils.MayaNode: Jiggle deformer node
         self.disk_cache_node = None # str: disk cache node to store jiggle deform cache
@@ -189,13 +191,29 @@ class JiggleRig(object):
         self.animation_data_locator.set_parent(self.main_group)
         self.jiggle_geometry.set_parent(self.animation_data_locator)
         self.jiggle_locator.set_parent(self.main_group)
+
+        #TODO: add this feature to layout and test only rotation and only translation
+        self.point_constraint = constraint_utils.create_point_constraint(
+            parent=self.jiggle_locator.long_name,
+            child=self.transform.transform_node,
+            maintain_offset=True)[0]
+            
+        self.point_constraint = maya_node_utils.MayaNode(node=self.point_constraint)
         
+        self.orient_constraint = constraint_utils.create_orient_constraint(
+            parent=self.jiggle_locator.long_name,
+            child=self.transform.transform_node,
+            maintain_offset=True)[0]
+            
+        self.orient_constraint = maya_node_utils.MayaNode(node=self.orient_constraint)
+        """
         # Attach transform node to jiggle. This inits the transform constraint
         self.transform_constraint = constraint_utils.create_parent_constraint(
             parent=self.jiggle_locator.long_name,
             child=self.transform.transform_node,
             maintain_offset=True)[0]
-        self.transform_constraint = maya_node_utils.MayaNode(node=self.transform_constraint)
+        """
+        #self.transform_constraint = maya_node_utils.MayaNode(node=self.transform_constraint)
         
         # Connect jiggle attributes to main group
         self._connect_jiggle_attributes_to_main_group()
@@ -238,6 +256,22 @@ class JiggleRig(object):
             hidden=False,
             keyable=True
         )
+        cmds.addAttr(
+            self.main_group.long_name,
+            attributeType="bool",
+            longName="Translation",
+            defaultValue=1,
+            hidden=False,
+            keyable=True
+        )
+        cmds.addAttr(
+            self.main_group.long_name,
+            attributeType="bool",
+            longName="Rotation",
+            defaultValue=1,
+            hidden=False,
+            keyable=True
+        )
         
         cmds.connectAttr("{0}.{1}".format(self.main_group.long_name, "stiffness"), "{0}.{1}".format(self.jiggle_deform_node.long_name, "stiffness"))
         cmds.connectAttr("{0}.{1}".format(self.main_group.long_name, "damping"), "{0}.{1}".format(self.jiggle_deform_node.long_name, "damping"))
@@ -247,7 +281,9 @@ class JiggleRig(object):
         """
         connect rig nodes to the main group node via message attribute
         """
-        self._connect_to_message_attribute(self.transform_constraint, "transform_constraint")
+        self._connect_to_message_attribute(self.point_constraint, "point_constraint_node")
+        self._connect_to_message_attribute(self.orient_constraint, "orient_constraint_node")
+        #self._connect_to_message_attribute(self.transform_constraint, "transform_constraint")
         self._connect_to_message_attribute(self.jiggle_geometry, "jiggle_geometry")
         self._connect_to_message_attribute(self.jiggle_deform_node, "jiggle_deform_node")
         self._connect_to_message_attribute(self.disk_cache_node, "disk_cache_node")
@@ -260,6 +296,7 @@ class JiggleRig(object):
         :param maya_node_utils.MayaNode maya_node_item: maya node item to connect
         """
         # Create message attribute
+        print(self.main_group.long_name)
         cmds.addAttr(self.main_group.long_name, keyable=False, attributeType="message", longName=name)
         cmds.addAttr(maya_node_item.long_name, keyable=False, attributeType="message", longName=name)
         
@@ -282,8 +319,7 @@ def create_jiggle_rig_from_selection(**kwargs):
         indexed_name = "{0}_{1}".format(name, index)
         while performance_utils.obj_exists(indexed_name):
             index += 1
-            indexed_name = "{0}_{1}".format(name, index)
-            
+            indexed_name = "{0}_{1}".format(name, index)    
         try:
             jiggle_rig_instance = JiggleRig(**kwargs)
             jiggle_rig_instance.create_jiggle_rig(name=indexed_name, node=item, **kwargs)

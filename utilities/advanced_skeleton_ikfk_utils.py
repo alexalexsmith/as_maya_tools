@@ -1,5 +1,5 @@
 """
-advanced skeleton IKFK switch extracted so I can control it's function better
+advanced skeleton IKFK switch extracted so I can manage it better
 """
 
 from maya import cmds
@@ -12,7 +12,63 @@ ARM_FK_SNAP_NODES = ("Shoulder", "Elbow", "Wrist")
 LEG_FK_SNAP_NODES = ("Hip", "Knee", "Ankle")
 
 
-def match_ikfk(*args,**kwargs):
+def selection_changed_callback_switch_ikfk():
+    """
+    function to switch between IK and FK interpolation using a SelectionChanged callback in Maya
+    """
+    selection = cmds.ls(selection=True)
+    if len(selection) < 0:
+        return
+    for node in selection:
+        side=None
+        if node.endswith("_L"):
+            side ="L"
+        if node.endswith("_R"):
+            side ="R"
+        if not side:
+            return
+        if not ":" in node:
+            return
+        
+        namespace, base_name = node.split(":")# If no namespace this will throw an error!!!!
+        fkik_node = None
+        if "IKArm" in node:
+            print("to IK we go!!!!")
+            fkik_node = "{0}:FKIKArm_{1}".format(namespace, side)
+            ik_handle = "{0}:IKArm_{1}".format(namespace, side)
+            cmds.setAttr("{0}.FKIKBlend".format(fkik_node), 10)
+                
+        if "IKLeg" in node:
+            print("to IK we go!!!!")
+            fkik_node = "{0}:FKIKLeg_{1}".format(namespace, side)
+            ik_handle = "{0}:IKLeg_{1}".format(namespace, side)
+            cmds.setAttr("{0}.FKIKBlend".format(fkik_node), 10)
+            
+        for control_base_name in ARM_FK_SNAP_NODES:
+            if control_base_name in node:
+                print("to FK we go!!!!")
+                fkik_node = "{0}:FKIKArm_{1}".format(namespace, side)
+                ik_handle = "{0}:IKArm_{1}".format(namespace, side)
+                cmds.setAttr("{0}.FKIKBlend".format(fkik_node), 0)
+                
+        for control_base_name in LEG_FK_SNAP_NODES:
+            if control_base_name in node:
+                print("to FK we go!!!!")
+                fkik_node = "{0}:FKIKLeg_{1}".format(namespace, side)
+                ik_handle = "{0}:IKLeg_{1}".format(namespace, side)
+                cmds.setAttr("{0}.FKIKBlend".format(fkik_node), 0)
+                
+        if not fkik_node:
+            return
+            
+        ik_fk_switch = cmds.getAttr("{0}.FKIKBlend".format(fkik_node))
+        # tool only works if these values are set like this :(
+        cmds.setAttr("{0}.stretchy".format(ik_handle),10)
+        cmds.setAttr("{0}.Lenght1".format(ik_handle),1)
+        cmds.setAttr("{0}.Lenght2".format(ik_handle),1)
+
+
+def match_ikfk(*args, **kwargs):
     """
     match ik to fk or fk to ik dependant on the FKIK control blend attribute values
     """
@@ -30,7 +86,7 @@ def match_ikfk(*args,**kwargs):
         if not ":" in node:
             return
         
-        namespace, base_name = node.split(":")
+        namespace, base_name = node.split(":")# If no namespace this will throw an error!!!!
         fkik_node = None
         for snap_node in IKFK_ARM_NODES:
             if snap_node in node:
@@ -54,28 +110,27 @@ def match_ikfk(*args,**kwargs):
         cmds.setAttr("{0}.Lenght2".format(ik_handle),1)
         
         if ik_fk_switch == 10:
-            match_fk_to_ik(node)
+            match_fk_to_ik(node, side)
         if ik_fk_switch == 0:
-            match_ik_to_fk(node)
+            match_ik_to_fk(node, side)
 
 
-def match_fk_to_ik(node):
+def match_fk_to_ik(node, side):
     """
     match fk to ik controls
     :param str node: name of node belonging to IK/FK system
     """
     # TODO: try to make this more universal
     #arm
-    selection = node
     fk_snap_nodes = None
     
     for snap_node in IKFK_ARM_NODES:
-        if snap_node in selection:
+        if snap_node in node:
             fk_snap_nodes = ARM_FK_SNAP_NODES
             continue
             
     for snap_node in IKFK_LEG_NODES:
-        if snap_node in selection:
+        if snap_node in node:
             fk_snap_nodes = LEG_FK_SNAP_NODES
             continue
             
@@ -83,16 +138,7 @@ def match_fk_to_ik(node):
         cmds.warning("select an IK or FK control")
         return
         
-    side = None
-    if selection.endswith("_L"):
-        side ="L"
-    if selection.endswith("_R"):
-        side ="R"
-    if not side:
-        cmds.warning("select an IK or FK control")
-        return
-        
-    namespace, base_name = selection.split(":")
+    namespace, base_name = node.split(":")
     
     for snap_node in fk_snap_nodes:
         ctrl_name = "{0}:FK{1}_{2}".format(namespace, snap_node, side)
@@ -102,14 +148,12 @@ def match_fk_to_ik(node):
         cmds.setKeyframe(ctrl_name)
 
 
-def match_ik_to_fk(node):
+def match_ik_to_fk(node, side):
     """
     match ik to fk controls
     :param str node: name of node belonging to IK/FK system
     """
-    selection = node
-    ik_matrix_offset_dict = get_ik_matrix_offset_dict(selection)
-    print(ik_matrix_offset_dict)
+    ik_matrix_offset_dict = get_ik_matrix_offset_dict(node, side)
     
     if not ik_matrix_offset_dict:
         cmds.warning("Unable to get ik controls for switch")
@@ -119,10 +163,6 @@ def match_ik_to_fk(node):
     offset_mmatrix = om.MMatrix(ik_matrix_offset_dict["ik_matrix"])
     parent_world_matrix = om.MMatrix(cmds.xform(ik_matrix_offset_dict["ik_control_snap_bone"], q=True, matrix=True, ws=True))
     paste_matrix = offset_mmatrix * parent_world_matrix
-    #rotation_offset = cmds.matrixUtil(list(paste_matrix), query=True, rotation=True)
-    #position_offset = cmds.xform(ik_matrix_offset_dict["ik_control_snap_bone"], q=True, translation=True, ws=True)
-    #cmds.xform(ik_matrix_offset_dict["ik_control"], rotation=list(paste_matrix), ws=True)
-    #cmds.xform(ik_matrix_offset_dict["ik_control"], translation=list(paste_matrix), ws=True)
     cmds.xform(ik_matrix_offset_dict["ik_control"], matrix=list(paste_matrix), ws=True)
     cmds.setKeyframe(ik_matrix_offset_dict["ik_control"])
     
@@ -134,21 +174,11 @@ def match_ik_to_fk(node):
     cmds.setKeyframe(ik_matrix_offset_dict["pole_control"])
     
    
-def get_ik_matrix_offset_dict(node):
+def get_ik_matrix_offset_dict(node, side):
     """
     :param str node: name of node belonging to IK/FK system
     """
     # Figure out which controls to use
-    
-    # Get the side the control belongs to
-    side = None
-    if node.endswith("_L"):
-        side ="L"
-    if node.endswith("_R"):
-        side ="R"
-    if not side:
-        cmds.warning("Unable to get control side")
-        return None
         
     # assuming there is always a namespace
     namespace, base_name = node.split(":")
@@ -194,7 +224,8 @@ def get_ik_matrix_offset_dict(node):
     
     return ik_snap_matrix_dict
 
-    
+
+# NOTE: this calculation can cause issues where the shear value is manipulated. This can cause the IK control to explode into the nether
 def get_matrices_offset_dict(parent, child):
     """get the matrices offset dict
     :param str parent: parent to relate offset to

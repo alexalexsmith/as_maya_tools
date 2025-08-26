@@ -5,7 +5,7 @@ import os
 
 from maya import cmds
 
-from as_maya_tools.utilities import json_utils
+from as_maya_tools.utilities import json_utils, performance_utils
 from as_maya_tools import SELECTION_SET_DIRECTORY
 
 
@@ -24,7 +24,7 @@ def create_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
         name = node
         namespace = None
         if ":" in node:
-            namespace, name = node.split(":")
+            namespace, name = node.rsplit(":", 1)
         data[node] = {"namespace": namespace, "name": name}
     directory = SELECTION_SET_DIRECTORY
     if sub_folder:
@@ -32,18 +32,16 @@ def create_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
     json_utils.write_json_file(directory, file_name, data)
 
 
-def create_selection_set_file():
+def delete_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
     """
-    create selection set file to store selection sets
+    delete the selection set .json file
     """
-    return
-    
-    
-def create_selection_set_data():
-    """
-    create selection set data to store in a selection set file
-    """
-    return
+    directory = SELECTION_SET_DIRECTORY
+    if sub_folder:
+        directory = os.path.join(directory, sub_folder)
+    file_path = os.path.join(directory, "{0}.json".format(file_name))
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
 
 def get_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
@@ -62,7 +60,7 @@ def get_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
     for node in selection_set_data:
         if not selection_set_data[node]["namespace"]:
             # Any nodes in the selection set without a namespace are added directly, If they currently exist
-            if cmds.objExists(node):
+            if performance_utils.obj_exists(node):
                 selection_set.append(node)
             continue
         if namespaces:
@@ -71,12 +69,12 @@ def get_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
                 # Rebuild the control name with the namespaces of selected nodes
                 rebuilt_name = "{0}:{1}".format(namespace, selection_set_data[node]["name"])
                 # Only add the node if it currently exists
-                if cmds.objExists(rebuilt_name):
+                if performance_utils.obj_exists(rebuilt_name):
                     selection_set.append(rebuilt_name)
         else:
             # Use the stored namespace if no nodes with namespaces are selected
             # Only add the node if it currently exists
-            if cmds.objExists(node):
+            if performance_utils.obj_exists(node):
                 selection_set.append(node)
     return selection_set
 
@@ -88,7 +86,7 @@ def get_namespaces_from_nodes(nodes):
     namespaces = []
     for node in nodes:
         if ":" in node:
-            namespace, _ = node.split(":")
+            namespace, _ = node.rsplit(":", 1)
             namespaces.append(namespace)
     return namespaces if len(namespaces) > 0 else None
     

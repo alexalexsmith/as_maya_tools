@@ -13,3 +13,4 @@ def set_playbackslider_to_selected_keys():
         timeline_utils.get_selected_key_range()[0],
         timeline_utils.get_selected_key_range()[1]
     )
+    cmds.selectKey(clear=True)

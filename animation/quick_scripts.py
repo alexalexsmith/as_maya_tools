@@ -1,9 +1,73 @@
 """
 quick scripts usually assigned to hotkeys to perform quick actions
 """
+
+import re
+from PySide2 import QtWidgets
+
 from maya import cmds
 
 from as_maya_tools.utilities import constraint_utils
+
+
+FILE_EXTENSIONS = [".png", ".jpg", ".tiff"] # add more file formats here, must be PIL compatible
+
+
+def import_image(**kwargs):
+    """Import image as plane"""
+    image_path = get_image_file_path(**kwargs)
+
+    if not image_path:
+        return
+
+    image_name = get_image_name(image_path)
+
+    image_plane = cmds.imagePlane(
+        name=image_name,
+        maintainRatio=1,
+        lookThrough="persp",
+        fileName=image_path
+    )
+    
+    
+def get_image_name(image_path):
+    """get the image name from a path. name will be fixed to be compatible with maya nodes
+    :param str image_path: path to image
+    :return str: image name
+    """
+    image_name_and_extension = image_path.split("/")[-1]
+    for file_extension in FILE_EXTENSIONS:
+        if image_name_and_extension.endswith(file_extension):
+            image_name = image_name_and_extension.split(file_extension)[0]
+            return get_maya_node_name(image_name)
+
+
+def get_image_file_path(parent=None, **kwargs):
+    """Get a saved .mcon file using a Qt file dialog
+    :param QtWidget parent: parent of file dialog
+    :return str: file_path
+    """
+    file_extensions = " ".join(["*{}".format(extension) for extension in FILE_EXTENSIONS])
+    file_filter = "Image ({0})".format(file_extensions)
+    response = QtWidgets.QFileDialog().getOpenFileName(
+        parent=parent,
+        caption="Import Image",
+        filter=file_filter,
+        initialFilter=file_filter
+    )
+    file_path = response[0]
+    return file_path
+    
+
+def get_maya_node_name(string):
+    """get string only containing legal characters for a maya node. Replace illegal characters with "_"
+    :param str string: string to be checked and fixed
+    :return str: fixed_name
+    """
+    regex = r"[^a-zA-Z0-9]"
+    subst = "_"
+    fixed_name = re.sub(regex, subst, string, 0, re.MULTILINE)
+    return fixed_name
 
 
 def create_locator_at_selected():

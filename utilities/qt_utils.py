@@ -224,7 +224,7 @@ class TreeWidgetRightClickSupportAbstract(QtWidgets.QTreeWidget):
 
     def __init__(self, parent=None, *args, **kwargs):
         super(TreeWidgetRightClickSupportAbstract, self).__init__(parent=parent, *args, **kwargs)
-        #self.setFont(QtGui.QFont(self.FONT, self.FONT_SIZE, QtGui.QFont.Bold))
+        self.setFont(QtGui.QFont(self.FONT, self.FONT_SIZE, QtGui.QFont.Bold))
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setHeaderLabels(self.HEADER_LABELS)
         self.setAlternatingRowColors(True)
