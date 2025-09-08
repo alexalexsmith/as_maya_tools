@@ -1,3 +1,7 @@
+"""
+timeline utilities
+"""
+
 from maya import cmds, mel
 
 
@@ -29,4 +33,11 @@ def set_playback_range(start, end):
     Sets the playback range.
     """
     cmds.playbackOptions(edit=True, minTime=start), cmds.playbackOptions(edit=True, maxTime=end)
+
     
+def play_simulation():
+    """
+    play animation with simulation evaluated. Will always set the frame start to the playback range min
+    """
+    cmds.currentTime(cmds.playbackOptions(q=True, minTime=True))
+    cmds.play(record=True)

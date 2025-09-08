@@ -31,9 +31,10 @@ def import_grease_pencil(offset_to_first_frame=True):
     Import the grease pencil and place the frames at the current timeslider min frame
     :param bool offset_to_first_frame: option to offset the bluepencil frames to the first animation frame usefull when importing from syncsketch
     """
+    mel.eval('checkAndLoadPlugin("bluePencil")')
     cmds.bluePencilFrame(importFrames=True)
     if offset_to_first_frame:
-        drawing_frame_range = [0, timeline_utils.get_playback_range()[1] - timeline_utils.get_playback_range()[0]]
+        drawing_frame_range = [0,timeline_utils.get_playback_range()[1] - timeline_utils.get_playback_range()[0]]
         first_frame = float(timeline_utils.get_playback_range()[0])-1
         cmds.bluePencilFrame(move=(first_frame, drawing_frame_range[0], drawing_frame_range[1]))
     return

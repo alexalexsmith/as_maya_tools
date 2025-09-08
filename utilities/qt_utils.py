@@ -226,7 +226,8 @@ class TreeWidgetRightClickSupportAbstract(QtWidgets.QTreeWidget):
         super(TreeWidgetRightClickSupportAbstract, self).__init__(parent=parent, *args, **kwargs)
         self.setFont(QtGui.QFont(self.FONT, self.FONT_SIZE, QtGui.QFont.Bold))
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.setHeaderLabels(self.HEADER_LABELS)
+        if self.HEADER_LABELS:
+            self.setHeaderLabels(self.HEADER_LABELS)
         self.setAlternatingRowColors(True)
         self._init_popup_menu()
 
@@ -252,3 +253,139 @@ class TreeWidgetRightClickSupportAbstract(QtWidgets.QTreeWidget):
         :param QPosition position: passed by signal where to display popup
         """
         _value = self.popup_menu.exec_(self.mapToGlobal(position))
+
+
+class ConfirmDialog(QtWidgets.QDialog):
+    """
+    Confirm dialog to give user a chance to avoid errors
+    """
+
+    def __init__(self, parent, window_title="Warning", message="Are you sure?", **kwargs):
+        super(ConfirmDialog, self).__init__(parent, **kwargs)
+        self._window_name = window_title
+        self.message = message
+        self._parent = parent
+        # Create Widgets
+        self._customUI()
+
+        # Connect Signals
+        self._setupSocketConnections()
+
+    def keyPressEvent(self, event):
+        """
+        get key press event enter or return and run command for that key
+        """
+        super(ConfirmDialog, self).keyPressEvent(event)
+        if event.key() in [QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter]:
+            self._callback_confirm()
+
+    def _customUI(self):
+        """
+        target name custom ui
+        """
+        self.setWindowTitle(self._window_name)
+        self._main_layout = QtWidgets.QVBoxLayout(self)
+        self.resize(200, 100)
+        self._name_row_layout = QtWidgets.QHBoxLayout(self)
+        self._confirm_row_layout = QtWidgets.QHBoxLayout(self)
+
+        self._name_label = QtWidgets.QLabel(self)
+        self._name_label.setText(self.message)
+
+        self._btn_ok = QtWidgets.QPushButton("OK")
+        self._btn_cancel = QtWidgets.QPushButton("Cancel")
+
+        self._name_row_layout.addWidget(self._name_label)
+
+        self._confirm_row_layout.addWidget(self._btn_ok)
+        self._confirm_row_layout.addWidget(self._btn_cancel)
+
+        self._main_layout.addLayout(self._name_row_layout)
+        self._main_layout.addLayout(self._confirm_row_layout)
+
+    def _setupSocketConnections(self):
+        """
+        Create signal and slot connections for within the UI
+        """
+        self._btn_ok.clicked.connect(self._callback_confirm)
+        self._btn_cancel.clicked.connect(self._cancel_dialog)
+        self._main_layout.keyPressEvent = self.keyPressEvent
+
+    def _callback_confirm(self):
+        """
+        Make sure the name is valid before creating simitRig
+        """
+        self.accept()
+
+    def _cancel_dialog(self):
+        """
+        close the dialog
+        """
+        self.reject()
+       
+        
+class InformationDialog(QtWidgets.QDialog):
+    """
+    Confirm dialog to give user a chance to avoid errors
+    """
+
+    def __init__(self, parent, window_title="Warning", message="Are you sure?", **kwargs):
+        super(InformationDialog, self).__init__(parent, **kwargs)
+        self._window_name = window_title
+        self.message = message
+        self._parent = parent
+        # Create Widgets
+        self._customUI()
+
+        # Connect Signals
+        self._setupSocketConnections()
+
+    def keyPressEvent(self, event):
+        """
+        get key press event enter or return and run command for that key
+        """
+        super(InformationDialog, self).keyPressEvent(event)
+        if event.key() in [QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter]:
+            self._callback_confirm()
+
+    def _customUI(self):
+        """
+        target name custom ui
+        """
+        self.setWindowTitle(self._window_name)
+        self._main_layout = QtWidgets.QVBoxLayout(self)
+        self.resize(200, 100)
+        self._name_row_layout = QtWidgets.QHBoxLayout(self)
+        self._confirm_row_layout = QtWidgets.QHBoxLayout(self)
+
+        self._name_label = QtWidgets.QLabel(self)
+        self._name_label.setText(self.message)
+
+        self._btn_ok = QtWidgets.QPushButton("OK")
+
+        self._name_row_layout.addWidget(self._name_label)
+
+        self._confirm_row_layout.addWidget(self._btn_ok)
+
+        self._main_layout.addLayout(self._name_row_layout)
+        self._main_layout.addLayout(self._confirm_row_layout)
+
+    def _setupSocketConnections(self):
+        """
+        Create signal and slot connections for within the UI
+        """
+        self._btn_ok.clicked.connect(self._callback_confirm)
+        self._main_layout.keyPressEvent = self.keyPressEvent
+
+    def _callback_confirm(self):
+        """
+        Make sure the name is valid before creating simitRig
+        """
+        self.accept()
+
+    def closeEvent(self, event):
+        """
+        On close delete from memory
+        """
+        super(InformationDialog, self).closeEvent(event)
+        self.deleteLater()

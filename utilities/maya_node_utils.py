@@ -30,7 +30,7 @@ class MayaNode(object):
         # Joints are very "special"
         elif cmds.objectType(transform) == "joint":
             pass
-        elif cmds.objectType(transform) == "parentConstraint":
+        elif "Constraint" in cmds.objectType(transform):
             pass
         else:
             # Some non transform nodes don't have a transform node above them (Nucleus),

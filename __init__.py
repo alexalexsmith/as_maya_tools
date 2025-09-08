@@ -1,3 +1,5 @@
+import os
+
 from maya import cmds
 
 
@@ -12,13 +14,15 @@ def get_user_scripts_folder():
 
 USER_DATA_PATH = "{0}as_maya_tools_user_data".format(get_user_scripts_folder())
 
-REPO_DATA_PATH = "{0}as_maya_tools".format(get_user_scripts_folder())
+REPO_DATA_PATH = os.path.dirname(os.path.abspath(__file__))
 
 RIG_DEFINITION_CONTEXT_PATH = "{0}/RIG_DEFINITION_CONTEXTS".format(USER_DATA_PATH)
 
 RIG_SELECTION_SETTINGS_PATH = "{0}/RIG_SELECTION_SETTINGS".format(USER_DATA_PATH)
 
 SELECTION_SET_DIRECTORY = "{0}/SELECTION_SETS".format(USER_DATA_PATH)
+
+SELECTION_SET_MANAGER_SETTINGS_PATH = "{0}/SELECTION_SET_MANAGER_SETTINGS".format(USER_DATA_PATH)
 
 NOISE_GENERATION_SETTINGS_PATH = "{0}/NOISE_GENERATION_SETTINGS_PATH".format(USER_DATA_PATH)
 

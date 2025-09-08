@@ -1,10 +1,5 @@
 """
 Import an image sequence for use as reference
-TODO
-possible features
--attach to selected camera(if camera is selected)
--polygon plane option maybe
--convert movie file to image sequence if possible. use ffmpeg?
 """
 
 import re, os
@@ -14,12 +9,20 @@ from maya import cmds
 
 from as_maya_tools.utilities import timeline_utils
 
-FILE_EXTENSIONS = [".png", ".jpg", ".tiff"] # add more file formats here
+FILE_EXTENSIONS = [".png", ".jpg", ".tiff"] # add more file formats here, must be PIL compatible
 IMAGESEQUENCE_REGREX = "^(.*)(?<!\d)(\d+)\.(\w+)$"
+
+# TODO: grab image sequence start and end and set the keyframes
+"""
+possible features
+-attach to selected camera(if camera is selected)
+-polygon plane option maybe
+-convert movie file to image sequence if possible. use RV? use ffmpeg?
+"""
 
 
 def import_image(**kwargs):
-    """Import image sequence as imageplane node"""
+    """Import image as plane"""
     image_path = get_image_file_path(**kwargs)
 
     if not image_path:
@@ -46,17 +49,17 @@ def import_image(**kwargs):
         image_plane[1],
         attribute="frameExtension",
         value=image_suquence_range[0],
-        time=[refernece_start_frame_offset, refernece_start_frame_offset],
-        inTangentType="linear",
-        outTangentType="linear"
+        time = [refernece_start_frame_offset, refernece_start_frame_offset],
+        inTangentType = "linear",
+        outTangentType = "linear"
         )
     cmds.setKeyframe(
         image_plane[1],
         attribute="frameExtension",
         value=image_suquence_range[1],
-        time=[reference_end_frame_offset, reference_end_frame_offset],
-        inTangentType="linear",
-        outTangentType="linear"
+        time = [reference_end_frame_offset, reference_end_frame_offset],
+        inTangentType = "linear",
+        outTangentType = "linear"
         )
     
     
@@ -88,7 +91,7 @@ def get_image_file_path(parent=None, **kwargs):
     file_path = response[0]
     return file_path
     
-# TODO: This function will get used a lot. maya node handling utilities?
+
 def get_maya_node_name(string):
     """get string only containing legal characters for a maya node. Replace illegal characters with "_"
     :param str string: string to be checked and fixed

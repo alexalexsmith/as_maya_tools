@@ -44,18 +44,24 @@ def delete_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
         os.remove(file_path)
 
 
-def get_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
+def get_selection_set(sub_folder=None, file_name="selection_set", scene_namespace = None, **kwargs):
     """
     Returns list of nodes from the given selection set
-    :param sub_folder: Sub-folder within the selection set directory
-    :param file_name: Name of the selection set
+    :param str sub_folder: Sub-folder within the selection set directory
+    :param str file_name: Name of the selection set
+    :param str scene_namespace: namespace to overide stored namespace 
     """
     directory = SELECTION_SET_DIRECTORY
+    
     if sub_folder:
         directory = os.path.join(directory, sub_folder)
     selection_set_data = json_utils.read_offset_json_file(directory, file_name)
-    selected_nodes = cmds.ls(selection=True)
-    namespaces = get_namespaces_from_nodes(selected_nodes)
+
+    namespaces = [scene_namespace]
+    if scene_namespace is None:
+        selected_nodes = cmds.ls(selection=True)
+        namespaces = get_namespaces_from_nodes(selected_nodes)
+        
     selection_set = []
     for node in selection_set_data:
         if not selection_set_data[node]["namespace"]:
