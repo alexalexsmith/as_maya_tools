@@ -2,6 +2,7 @@
 Utilities for managing attributes
 """
 from maya import cmds
+import maya.api.OpenMaya as om
 
 
 class Transform(object):
@@ -29,7 +30,7 @@ class Transform(object):
         self.rotate = [self.rotate_x, self.rotate_y, self.rotate_z]
         self.scale = [self.scale_x, self.scale_y, self.scale_z]
         
-    def get_translation(self, world_space = False):
+    def get_translation(self, world_space=False):
         """
         Get the current translation as a Tuple (x,y,z)
         """
@@ -37,7 +38,7 @@ class Transform(object):
             return cmds.xform(self.transform_node, query=True, translation=True, ws=True)
         return (self.translate_x.get_value(), self.translate_y.get_value(),self.translate_z.get_value())
         
-    def get_rotation(self, world_space = False):
+    def get_rotation(self, world_space=False):
         """
         Get the curent rotation value as a Tuple (x,y,z)
         """
@@ -45,7 +46,7 @@ class Transform(object):
             return cmds.xform(self.transform_node, query=True, rotation=True, ws=True)
         return (self.rotate_x.get_value(), self.rotate_y.get_value(),self.rotate_z.get_value())
         
-    def get_scale(self, world_space = False):
+    def get_scale(self, world_space=False):
         """
         Get the curent scale value as a Tuple (x,y,z)
         """
@@ -63,6 +64,18 @@ class Attribute(object):
         self.node, self.attribute = attribute_path.split(".")
         self.type = cmds.getAttr(attribute_path, type=True)
         self.value = cmds.getAttr(attribute_path)
+        self.m_attr_plug = None
+        self.m_attribute = None
+        self._init_m_attribute()
+
+    def _init_m_attribute(self):
+        """initiate the openMaya attribute object"""
+        sel = om.MSelectionList()
+        sel.add(self.node)
+        mobj = sel.getDependNode(0)
+        fn_node = om.MFnDependencyNode(mobj)
+        self.m_attr_plug = fn_node.findPlug(self.attribute, False)
+        self.m_attribute = self.m_attr_plug.attribute()
 
     def is_selected(self):
         """
@@ -84,7 +97,7 @@ class Attribute(object):
         
     def get_connections(self):
         """
-        get a list incomming connections
+        get a list of incoming connections
         """
         # TODO: may need to filter out self in list
         return cmds.listConnections(self.attribute_path, skipConversionNodes=True)
@@ -92,9 +105,15 @@ class Attribute(object):
     def get_default_value(self):
         """
         return the default value.
-        NOTE: This cmd returns a list. using [0] to return a single value
         """
-        return cmds.attributeQuery(self.attribute, node=self.node, listDefault=True)[0]
+        if self.m_attribute.hasFn(om.MFn.kNumericAttribute):
+            return om.MFnNumericAttribute(self.m_attribute).default
+        elif self.m_attribute.hasFn(om.MFn.kEnumAttribute):
+            return om.MFnEnumAttribute(self.m_attribute).default
+        elif self.m_attribute.hasFn(om.MFn.kTypedAttribute):
+            return om.MFnTypedAttribute(self.m_attribute).default
+        else:
+            return 0  #NOTE: default value for translation and rotation attributes
         
     def get_value(self):
         """
@@ -102,7 +121,7 @@ class Attribute(object):
         """
         return cmds.getAttr(self.attribute_path)
         
-    def get_keyframes():
+    def get_keyframes(self):
         """
         get any keyframes on the attribute
         """

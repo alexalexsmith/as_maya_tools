@@ -225,6 +225,10 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         update selection set folder combobox
         """
         self.set_folder_combobox.clear()
+        # need to make sure the SELECTION_SETS folder is created on first use
+        if not os.path.isdir(SELECTION_SET_DIRECTORY):
+            os.makedirs(SELECTION_SET_DIRECTORY)
+            return
         for folder in os.listdir(SELECTION_SET_DIRECTORY):
             if os.path.isdir(os.path.join(SELECTION_SET_DIRECTORY, folder)):
                 self.set_folder_combobox.addItem(folder)

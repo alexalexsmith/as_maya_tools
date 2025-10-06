@@ -5,7 +5,7 @@ from maya import cmds
 from as_maya_tools.utilities.attribute_utils import Transform, Attribute
 
 
-def reset_transforms():
+def reset_transforms(check_attribute_selection=False):
     """
     set all transformation to default
     """
@@ -17,11 +17,15 @@ def reset_transforms():
         for attribute in (node.translate + node.rotate + node.scale):
             if not attribute.is_keyable():
                 continue
-            attribute.set_value(attribute.get_default_value())
+            if not check_attribute_selection:
+                attribute.set_value(attribute.get_default_value())
+                continue
+            if attribute.is_selected():
+                attribute.set_value(attribute.get_default_value())
     return
 
 
-def reset_translation():
+def reset_translation(check_attribute_selection=False):
     """
     set translation attributes to default
     """
@@ -33,11 +37,15 @@ def reset_translation():
         for attribute in node.translate:
             if not attribute.is_keyable():
                 continue
-            attribute.set_value(attribute.get_default_value())
+            if not check_attribute_selection:
+                attribute.set_value(attribute.get_default_value())
+                continue
+            if attribute.is_selected():
+                attribute.set_value(attribute.get_default_value())
     return
 
 
-def reset_rotation():
+def reset_rotation(check_attribute_selection=False):
     """
     set rotation attributes to default
     """
@@ -49,11 +57,15 @@ def reset_rotation():
         for attribute in node.rotate:
             if not attribute.is_keyable():
                 continue
-            attribute.set_value(attribute.get_default_value())
+            if not check_attribute_selection:
+                attribute.set_value(attribute.get_default_value())
+                continue
+            if attribute.is_selected():
+                attribute.set_value(attribute.get_default_value())
     return
 
 
-def reset_scale():
+def reset_scale(check_attribute_selection=False):
     """
     set scale attributes to default
     """
@@ -65,7 +77,11 @@ def reset_scale():
         for attribute in node.scale:
             if not attribute.is_keyable():
                 continue
-            attribute.set_value(attribute.get_default_value())
+            if not check_attribute_selection:
+                attribute.set_value(attribute.get_default_value())
+                continue
+            if attribute.is_selected():
+                attribute.set_value(attribute.get_default_value())
     return
 
 
@@ -84,13 +100,13 @@ def reset_selected_attributes():
             attribute_object.set_value(attribute_object.get_default_value())
             
             
-def reset_keyable_attributes():
-    """set selected attributes to default"""
+def reset_keyable_attributes(check_attribute_selection=False):
+    """set keyable attributes to default"""
     selected_nodes = cmds.ls(selection=True)
     if not selected_nodes:
         return
     for selected_node in selected_nodes:
-        keyable_attributes = cmds.listAttr(selected_node ,keyable=True, unlocked=True)
+        keyable_attributes = cmds.listAttr(selected_node, keyable=True, unlocked=True)
         if not keyable_attributes:
             continue
         for attribute in keyable_attributes:

@@ -9,10 +9,13 @@ except ModuleNotFoundError:
     from shiboken6 import wrapInstance
 
 from maya import cmds
+from maya.api import OpenMaya
 
 from as_maya_tools.utilities.qt_utils import DockableMainWindowAbstract
 from as_maya_tools.utilities import json_utils, attribute_utils, spaceswitch_utils, performance_utils
 from as_maya_tools.utilities import json_utils
+from as_maya_tools import STYLE_SHEETS_PATH
+from as_maya_tools.stylesheets import guiResources
 
 
 
@@ -35,7 +38,7 @@ class AdvancedSkeletonIKFKSwitcherUI(DockableMainWindowAbstract):
 
     Q_OBJECT_NAME = "ik_fk_switcher"
     
-    #STYLE_SHEET_PATH = "{0}/mortarheadd.qss".format(STYLE_SHEETS_PATH)
+    STYLE_SHEET_PATH = "{0}/theme/Flat/Dark/Cyan/Pink.qss".format(STYLE_SHEETS_PATH)
     
     def __init__(self, parent=None):
         super(AdvancedSkeletonIKFKSwitcherUI, self).__init__(parent)
@@ -141,6 +144,6 @@ class AdvancedSkeletonIKFKSwitcherUI(DockableMainWindowAbstract):
 
     def closeEvent(self, event):
         """Remove all callback messages and remove ui from memory"""
-        super(ConstraintManager, self).closeEvent(event)
+        super(AdvancedSkeletonIKFKSwitcherUI, self).closeEvent(event)
         self.remove_maya_callbacks()
         self.deleteLater()

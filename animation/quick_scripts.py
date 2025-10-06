@@ -70,13 +70,15 @@ def get_maya_node_name(string):
     return fixed_name
 
 
-def create_locator_at_selected():
+def create_locator_at_selected(match_locator_name=False):
     """Create a locator at the current position of the selected object(s)"""
     selected_nodes = cmds.ls(selection=True)
     if not selected_nodes:
         return
     for selected_node in selected_nodes:
         locator = cmds.spaceLocator()
+        if match_locator_name:
+            locator = cmds.rename(f"{selected_node}_loc")
         selected_node_matrix = cmds.xform(selected_node, query=True, matrix=True, ws=True)
         cmds.xform(locator, matrix=list(selected_node_matrix), ws=True)
 
