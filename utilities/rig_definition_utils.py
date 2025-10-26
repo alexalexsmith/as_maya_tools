@@ -18,7 +18,7 @@ DEFAULT_RIG_DEFINITION_CONTEXT = \
         "all": ("ControlSet", "FaceControlSet"),
         "position":
             {
-                "regrex": r".*(_L|_R)$",
+                "regrex": r"(?<![a-zA-Z])([lr])(?![a-zA-Z])",
                 "side": ("_L", "_R"),
             },
         "sets":
