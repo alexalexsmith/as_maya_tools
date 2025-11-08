@@ -196,11 +196,7 @@ def paste_keyframes(use_current_time=True, reverse=False):
                     anim_data["animation_data"][node_key][attribute_key][key_frame_key]["weight_lock"],
                     anim_data["animation_data"][node_key][attribute_key][key_frame_key]["weighted_tangents"],
                 )
-                #value = anim_data["animation_data"][node_data][attribute_data][key_frame_data]["value"]
-                #in_tangent = anim_data["animation_data"][node_data][attribute_data][key_frame_data]["in_tangent"]
-                #out_tangent = anim_data["animation_data"][node_data][attribute_data][key_frame_data]["out_tangent"]
-                #cmds.setKeyframe(f"{node}.{attribute_data}", time=key_frame_time, value=value, inTangentType=in_tangent,
-                #                 outTangentType=out_tangent)
+
 
 
 def get_keyframe_data(node, attribute, key_frame):

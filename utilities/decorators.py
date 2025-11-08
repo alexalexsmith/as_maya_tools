@@ -80,6 +80,7 @@ def maintain_selection(func):
     """
     Maintain the Original selection
     """
+    @wraps(func)
     def _wrapper_mantain_selection(*args, **kwargs):
         selection = cmds.ls(selection=True)
         try:
@@ -95,3 +96,26 @@ def maintain_selection(func):
             cmds.select(selection, replace=True)
                 
     return _wrapper_mantain_selection
+    
+    
+def base_animation_layer_unlock(func):
+    """
+    Makes sure the base animation layer is unlocked when code needs to set keyframes. If locked, layer is relocked after completion
+    """
+    @wraps(func)
+    def _wrapper_base_animation_layer_unlock(*args, **kwargs):
+        #function
+        base_anim_layer_lock_value = False
+        try:
+            if cmds.animLayer("BaseAnimation", query=True, exists=True):
+                if cmds.animLayer("BaseAnimation", query=True, lock=True):
+                    base_anim_layer_lock_value = True
+                    cmds.animLayer("BaseAnimation", edit=True, lock=False)
+        except Exception:
+            raise  # will raise original error
+        finally:
+            if cmds.animLayer("BaseAnimation", query=True, exists=True):
+                cmds.animLayer("BaseAnimation", edit=True, lock=base_anim_layer_lock_value)
+        
+    return _wrapper_base_animation_layer_unlock
+    

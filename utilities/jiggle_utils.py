@@ -6,6 +6,7 @@ Use Case:
 -existing animation will be baked into the jiggle
 -revising animation will require deleting jiggle rig or baking jiggle rig
 -If a constraint connection already exists on the animation control, jiggle rig creation will be denied
+TODO: if baseAnimation layer is locked, need to send a warning or temporarily unlock it 
 """
 from maya import cmds
 
@@ -333,7 +334,9 @@ class JiggleRig(object):
         cmds.connectAttr("{0}.{1}".format(maya_node_item.long_name, name), "{0}.{1}".format(self.main_group.long_name, name))
         
         
-
+#@decorators.base_animation_layer_unlock
+@decorators.suspend_refresh
+@decorators.undoable_chunk
 def create_jiggle_rig_from_selection(**kwargs):
     """
     create jiggle rigs from selection
@@ -386,7 +389,7 @@ def select_jiggle_rigs(rig_names, selection="rig"):
         if selection == "rig":
             nodes_to_select.append(rig_name)
         if selection == "animation_control":
-            nodes_to_select.append(jiggle_rig_instance.transform)
+            nodes_to_select.append(jiggle_rig_instance.transform.long_name)
             
     if len(nodes_to_select) > 0:
         cmds.select(nodes_to_select, replace=True)
@@ -402,11 +405,12 @@ def delete_jiggle_rigs(rig_names):
         return
     cmds.delete(rig_names)
     
-
+#@decorators.base_animation_layer_unlock
 @decorators.suspend_refresh
 @decorators.undoable_chunk
 def bake_jiggle_rigs(rig_names):
     """
+    TODO: baking will happen on the BaseAnimation layer. this may not be desired
     Bake all jiggle rigs passed
     :param list[str] rig_names: list of jiggle rig names
     """

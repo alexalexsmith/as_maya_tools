@@ -1,5 +1,6 @@
 """
 User interface for managing rig selection options
+TODO: implement the search/replace options 
 """
 import os
 try:
@@ -74,11 +75,18 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         self.namespace_settings_groupbox.setTitle("Namespace Settings")
         self.namespace_settings_groupbox.setProperty("Color", "Primary")
         self.namespace_settings_layout = QtWidgets.QGridLayout(self)
+        self.search_and_replace_settings_groupbox = QtWidgets.QGroupBox(self)
+        self.search_and_replace_settings_groupbox.setTitle("Search and Replace")
+        self.search_and_replace_settings_groupbox.setProperty("Color", "Primary")
+        self.search_and_replace_settings_layout = QtWidgets.QVBoxLayout(self)
         self.selection_set_creation_layout = QtWidgets.QHBoxLayout(self)
         self.selection_set_management_layout = QtWidgets.QVBoxLayout(self)
         self.selection_set_tree_groupbox = QtWidgets.QGroupBox(self)
         self.selection_set_tree_groupbox.setTitle("Selection Sets")
         self.selection_set_tree_groupbox.setProperty("Color", "Primary")
+        self.left_layout = QtWidgets.QVBoxLayout(self)
+        self.right_layout = QtWidgets.QVBoxLayout(self)
+        self.main_splitter = QtWidgets.QSplitter()
         
         # Widgets
         # file managment
@@ -89,6 +97,13 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         self.use_scene_namespace_checkbox = QtWidgets.QCheckBox(self)
         self.use_scene_namespace_checkbox.setText("Use Scene Namespace")
         self.scene_namespaces_combobox = QtWidgets.QComboBox(self)
+        #search and replace settings widgets
+        self.search_and_replace_checkbox = QtWidgets.QCheckBox(self)
+        self.search_and_replace_checkbox.setText("Search and Replace")
+        self.search_line_edit = QtWidgets.QLineEdit()
+        self.search_line_edit.setPlaceholderText("Search")
+        self.replace_line_edit = QtWidgets.QLineEdit()
+        self.replace_line_edit.setPlaceholderText("Replace")
         #selection set creation 
         self.create_selection_set_button = QtWidgets.QPushButton("Create Selection Set",self)
         self.delete_selection_set_button = QtWidgets.QPushButton("Delete Selection Set",self)
@@ -106,17 +121,36 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         self.namespace_settings_layout.addWidget(self.use_scene_namespace_checkbox, 0,0)
         self.namespace_settings_layout.addWidget(self.scene_namespaces_combobox ,0,1)
         self.namespace_settings_groupbox.setLayout(self.namespace_settings_layout)
+        # search and replace settings layout
+        self.search_and_replace_settings_layout.addWidget(self.search_and_replace_checkbox)
+        self.search_and_replace_settings_layout.addWidget(self.search_line_edit)
+        self.search_and_replace_settings_layout.addWidget(self.replace_line_edit)
+        self.search_and_replace_settings_groupbox.setLayout(self.search_and_replace_settings_layout)
         # selection set management layout
         self.selection_set_creation_layout.addWidget(self.create_selection_set_button)
         self.selection_set_creation_layout.addWidget(self.delete_selection_set_button)
         self.selection_set_management_layout.addLayout(self.selection_set_creation_layout)
         self.selection_set_management_layout.addWidget(self.selection_set_treeview)
         self.selection_set_tree_groupbox.setLayout(self.selection_set_management_layout)
-        # assign layout to main layout 
-        self.main_layout.addLayout(self.selection_set_file_management_layout)
-        self.main_layout.addWidget(self.namespace_settings_groupbox)
-        self.main_layout.addLayout(self.selection_set_creation_layout)
-        self.main_layout.addWidget(self.selection_set_tree_groupbox)
+        # assign layout to main layout
+        self.left_layout.addLayout(self.selection_set_file_management_layout)
+        self.left_layout.addLayout(self.selection_set_creation_layout)
+        self.left_layout.addWidget(self.selection_set_tree_groupbox)
+        self.right_layout.addWidget(self.namespace_settings_groupbox)
+        self.right_layout.addWidget(self.search_and_replace_settings_groupbox)
+
+        self.left_panel_widget = QtWidgets.QWidget(self)
+        self.left_panel_widget.setLayout(self.left_layout)
+        self.right_panel_widget = QtWidgets.QWidget(self)
+        self.right_panel_widget.setLayout(self.right_layout)
+        self.main_splitter.addWidget(self.left_panel_widget)
+        self.main_splitter.addWidget(self.right_panel_widget)
+        self.main_layout.addWidget(self.main_splitter)
+        #self.main_layout.addLayout(self.selection_set_file_management_layout)
+        #self.main_layout.addWidget(self.namespace_settings_groupbox)
+        #self.main_layout.addWidget(self.search_and_replace_settings_groupbox)
+        #self.main_layout.addLayout(self.selection_set_creation_layout)
+        #self.main_layout.addWidget(self.selection_set_tree_groupbox)
         
         self.setLayout(self.main_layout)
         

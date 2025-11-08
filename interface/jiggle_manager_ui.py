@@ -244,6 +244,8 @@ class JiggleRigsManagerUI(DockableMainWindowAbstract):
         self.bake_jiggle_rig.pressed.connect(self._callback_bake_jiggle_rigs)
         self.playback_button.pressed.connect(self._callback_play_simulation)
         
+        self.jiggle_rigs_treeview.itemSelectionChanged.connect(self._callback_select_jiggle_rigs)
+        
         self.jiggle_rigs_treeview.create_new_jiggle_rig_action.triggered.connect(self._callback_create_jiggle_rig)
         self.jiggle_rigs_treeview.delete_jiggle_rig_action.triggered.connect(self._callback_delete_jiggle_rig)
         self.jiggle_rigs_treeview.select_jiggle_rig_action.triggered.connect(self._callback_select_jiggle_rigs)
