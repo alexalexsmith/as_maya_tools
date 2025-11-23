@@ -3,7 +3,7 @@ Decorators
 """
 from functools import wraps
 
-from maya import cmds
+from maya import cmds, mel
 
 from as_maya_tools.utilities import performance_utils
 
@@ -104,13 +104,14 @@ def base_animation_layer_unlock(func):
     """
     @wraps(func)
     def _wrapper_base_animation_layer_unlock(*args, **kwargs):
-        #function
+        # unlock base animation layer before performing function
         base_anim_layer_lock_value = False
+        if cmds.animLayer("BaseAnimation", query=True, exists=True):
+            if cmds.animLayer("BaseAnimation", query=True, lock=True):
+                base_anim_layer_lock_value = True
+                cmds.animLayer("BaseAnimation", edit=True, lock=False)
         try:
-            if cmds.animLayer("BaseAnimation", query=True, exists=True):
-                if cmds.animLayer("BaseAnimation", query=True, lock=True):
-                    base_anim_layer_lock_value = True
-                    cmds.animLayer("BaseAnimation", edit=True, lock=False)
+            return func(*args, **kwargs)
         except Exception:
             raise  # will raise original error
         finally:
@@ -118,4 +119,21 @@ def base_animation_layer_unlock(func):
                 cmds.animLayer("BaseAnimation", edit=True, lock=base_anim_layer_lock_value)
         
     return _wrapper_base_animation_layer_unlock
-    
+
+
+def end_progress_bar_function(func):
+    """
+    force progress bar action to end if function fails
+    """
+
+    @wraps(func)
+    def _wrapper_end_progress_bar_function(*args, **kwargs):
+        gMainProgressBar = mel.eval('$maya_main_progress_bar = $gMainProgressBar');
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            raise  # will raise original error
+        finally:
+            cmds.progressBar(gMainProgressBar, edit=True, endProgress=True)
+
+    return _wrapper_end_progress_bar_function

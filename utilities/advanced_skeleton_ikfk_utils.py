@@ -4,6 +4,7 @@ advanced skeleton IKFK switch extracted so I can manage it better
 
 from maya import cmds
 import maya.api.OpenMaya as om
+from as_maya_tools.utilities import maya_node_utils
 
         
 IKFK_ARM_NODES = ("FKIKArm", "Shoulder", "Elbow", "Wrist", "PoleArm", "Arm")
@@ -30,7 +31,10 @@ def selection_changed_callback_switch_ikfk():
         if not ":" in node:
             return
         
-        namespace, base_name = node.split(":")# If no namespace this will throw an error!!!!
+        #namespace, base_name = node.split(":")# If no namespace this will throw an error!!!!
+        as_maya_node = maya_node_utils.MayaNode(node) # get my as_maya_tools maya node object from node string
+        namespace = as_maya_node.namespace
+        base_name = as_maya_node.short_name
         fkik_node = None
         if "IKArm" in node:
             print("to IK we go!!!!")
@@ -85,8 +89,10 @@ def match_ikfk(*args, **kwargs):
             return
         if not ":" in node:
             return
-        
-        namespace, base_name = node.split(":")# If no namespace this will throw an error!!!!
+        as_maya_node = maya_node_utils.MayaNode(node) # get my as_maya_tools maya node object from node string
+        namespace = as_maya_node.namespace
+        base_name = as_maya_node.short_name
+        #namespace, base_name = node.rsplit(":")# If no namespace this will throw an error!!!!
         fkik_node = None
         for snap_node in IKFK_ARM_NODES:
             if snap_node in node:
@@ -138,7 +144,11 @@ def match_fk_to_ik(node, side):
         cmds.warning("select an IK or FK control")
         return
         
-    namespace, base_name = node.split(":")
+    as_maya_node = maya_node_utils.MayaNode(node) # get my as_maya_tools maya node object from node string
+    namespace = as_maya_node.namespace
+    base_name = as_maya_node.short_name
+    
+    #namespace, base_name = node.split(":")
     
     for snap_node in fk_snap_nodes:
         ctrl_name = "{0}:FK{1}_{2}".format(namespace, snap_node, side)
@@ -181,8 +191,9 @@ def get_ik_matrix_offset_dict(node, side):
     # Figure out which controls to use
         
     # assuming there is always a namespace
-    namespace, base_name = node.split(":")
-    
+    as_maya_node = maya_node_utils.MayaNode(node) # get my as_maya_tools maya node object from node string
+    namespace = as_maya_node.namespace
+    base_name = as_maya_node.short_name
     # Get what type of ik system it is and grab the controls
     ik_chain_bone = None
     ik_pole_bone = None

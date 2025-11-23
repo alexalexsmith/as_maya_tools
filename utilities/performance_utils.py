@@ -3,7 +3,7 @@ Functions that speed up maya or replace maya cmds for better performance
 """
 
 import maya.api.OpenMaya as OpenMaya
-from maya import cmds
+from maya import cmds, mel
 
 
 
@@ -39,9 +39,24 @@ def message(message, position='midCenterTop', record_warning=True):
                             "botRight"
     :param bool record_warning: Option to record the warning in the script output
     """
-    
-    OpenMaya.MGlobal.displayWarning(message)
+
     fadeTime = min(len(message)*100, 2000)
     cmds.inViewMessage( amg=message, pos=position, fade=True, fadeStayTime=fadeTime, dragKill=True)
     if record_warning:
-        cmds.warning(message)
+        OpenMaya.MGlobal.displayWarning(message)
+        
+        
+def progress_bar(status_string, max_value):
+    """maya's main progress bar at lower left hand corner
+    :param str status_string: status string when beginProgress is True
+    :param int max_value: size of steps to show accurate percentage of action completion
+    :return str gMainProgressBar: name of mayas main progress bar"""
+
+    gMainProgressBar = mel.eval('$maya_main_progress_bar = $gMainProgressBar')
+    cmds.progressBar(gMainProgressBar,
+                     edit=True,
+                     beginProgress=True,
+                     isInterruptable=True,
+                     status=status_string,
+                     maxValue=max_value)
+    return gMainProgressBar

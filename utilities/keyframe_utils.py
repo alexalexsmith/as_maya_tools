@@ -3,7 +3,7 @@ Utilities for dealing with keyframes in maya
 """
 from maya import cmds, mel
 
-from as_maya_tools.utilities import timeline_utils, json_utils, performance_utils
+from as_maya_tools.utilities import timeline_utils, json_utils, performance_utils, maya_node_utils, decorators
 from as_maya_tools import KEYFRAME_DATA_PATH
 
 
@@ -49,7 +49,8 @@ def chunk_list(list_item, chunk_size=1):
         yield list_item[i:i + chunk_size]
 
 
-def copy_keyframes(all_keyframes=False):
+@decorators.end_progress_bar_function
+def copy_keyframes(all_keyframes=False, **kwargs):
     """
     copy animation from selected objects
     :param bool all_keyframes: option to save all keyframes
@@ -74,8 +75,11 @@ def copy_keyframes(all_keyframes=False):
         gPlayBackSlider = mel.eval('$tmp = $gPlayBackSlider')
         if cmds.timeControl(gPlayBackSlider, query=True, rangeVisible=True):
             frame_range = cmds.timeControl(gPlayBackSlider, query=True, rangeArray=True)
-
+            
+    main_progress_bar = performance_utils.progress_bar("copying animation", len(nodes))
+    
     for node in nodes:
+        cmds.progressBar(main_progress_bar, edit=True,step=1, status=(f"copying animation from {node}"))
         animatable_attributes = cmds.listAttr(node, keyable=True, unlocked=True, shortNames=True)
 
         # skipping node if no animatable attributes are available
@@ -101,20 +105,23 @@ def copy_keyframes(all_keyframes=False):
                     timeChange=True,
                     time=(frame_range[0], frame_range[1]))
 
-            # skipping attribute if no keyframes are found
-            if not key_frames or len(key_frames) == 0:
-                continue
+            # If no keyframes are found store the current value as backup
+            current_value = cmds.getAttr(f"{node}.{attribute}")
 
             key_frame_data = {}
-            for key_frame in key_frames:
+            # only try to store keyframe data if there is any
+            if key_frames:
+                for key_frame in key_frames:
 
-                # storing the keyframe range 'meta data'
-                key_frame_range_meta.append(key_frame)
+                    # storing the keyframe range 'meta data'
+                    key_frame_range_meta.append(key_frame)
 
-                # getting keyframe data
-                key_frame_data[key_frame] = get_keyframe_data(node, attribute, key_frame)
-
-            attribute_data[attribute] = key_frame_data
+                    # getting keyframe data
+                    key_frame_data[key_frame] = get_keyframe_data(node, attribute, key_frame)
+            value_data = {}
+            value_data["current_value"] = current_value
+            value_data["key_frame_data"] = key_frame_data
+            attribute_data[attribute] = value_data
         animation_data[node] = attribute_data
 
         # store included nodes meta data
@@ -130,21 +137,29 @@ def copy_keyframes(all_keyframes=False):
     main_data["animation_data"] = animation_data
     # save data in json file
     json_utils.write_json_file(KEYFRAME_DATA_PATH, COPY_KEYFRAME_DATA, main_data)
+    cmds.progressBar(main_progress_bar, edit=True, endProgress=True)
 
 
-def paste_keyframes(use_current_time=True, reverse=False):
+@decorators.end_progress_bar_function
+@decorators.undoable_chunk
+def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, replace=False, **kwargs):
     """
     paste animation
+    :param bool use_selection: option to use the current selection to paste keyframes
     :param bool use_current_time: option to paste animation using current time as offset
     :param bool reverse: option to reverse keyframes
+    :param bool replace: option to replace animation in the keyframe range
     """
-    nodes = cmds.ls(selection=True)
+    # read saved animation json file
+    anim_data = json_utils.read_offset_json_file(KEYFRAME_DATA_PATH, COPY_KEYFRAME_DATA)
+    
+    nodes = anim_data["nodes"]
+    
+    if use_selection:
+        nodes = cmds.ls(selection=True)
     if nodes is None or len(nodes) == 0:
         performance_utils.message("no nodes specified to paste keyframes", position='midCenterTop', record_warning=True)
         return
-
-    # read saved animation json file
-    anim_data = json_utils.read_offset_json_file(KEYFRAME_DATA_PATH, COPY_KEYFRAME_DATA)
 
     if not anim_data:
         performance_utils.message("no copied keyframe data found", position='midCenterTop', record_warning=True)
@@ -154,8 +169,16 @@ def paste_keyframes(use_current_time=True, reverse=False):
     animation_offset = 0
     if use_current_time:
         animation_offset = anim_data["keyframe_range"][0] - cmds.currentTime(query=True)
+        
+    main_progress_bar = performance_utils.progress_bar("pasting animation", len(nodes))
 
     for i, node in enumerate(nodes):
+        # skip any object that doesn't exist in the current maya session
+        if not performance_utils.obj_exists(node):
+            continue
+        
+        cmds.progressBar(main_progress_bar, edit=True, step=1, status=(f"pasting animtion to {node}"))
+        
         node_key = list(anim_data["animation_data"])[
             i % len(anim_data["animation_data"])]  # animation data will loop until selected node list ends
         for attribute_key in anim_data["animation_data"][node_key]:
@@ -167,35 +190,53 @@ def paste_keyframes(use_current_time=True, reverse=False):
                 continue
 
             # setting the order keyframes are applied
-            key_frames_data = anim_data["animation_data"][node_key][attribute_key]
+            key_frames_data = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"]
+
+            # use the current time stored value if no keyframes are stored
+            if len(key_frames_data) == 0:
+                cmds.setAttr(
+                    f"{node}.{attribute_key}",
+                    anim_data["animation_data"][node_key][attribute_key]["current_value"])
+                continue
+
+            # Reverse keyframes
+            # TODO: this needs to reverse the curve not the keyframe list
+            key_frames = []
+            for key_frame_key in key_frames_data:
+                key_frames.append(key_frame_key)
             if reverse:
-                key_frames_data = {value: key for key, value in key_frames_data.items()}
+                reverse_keyframes = []
+                for key_frame in reversed(key_frames):
+                    reverse_keyframes.append(key_frame)
+                key_frames = reverse_keyframes
+
 
             # set keyframes on nodes
-            for key_frame_key in key_frames_data:
+            for key_frame, key_frame_key in zip(key_frames_data, key_frames):
 
                 # getting the keyframe time including any offsets
-                key_frame_time = float(key_frame_key) - animation_offset
+                key_frame_time = float(key_frame) - animation_offset
 
                 set_keyframe(
                     node,
                     attribute_key,
                     key_frame_time,
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["value"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["in_tangent"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["out_tangent"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["in_angle"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["in_weight"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["ix"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["iy"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["lock"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["out_angle"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["out_weight"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["ox"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["oy"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["weight_lock"],
-                    anim_data["animation_data"][node_key][attribute_key][key_frame_key]["weighted_tangents"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["value"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["in_tangent"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["out_tangent"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["in_angle"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["in_weight"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["ix"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["iy"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["lock"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["out_angle"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["out_weight"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["ox"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["oy"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["weight_lock"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["weighted_tangents"],
                 )
+    cmds.progressBar(main_progress_bar, edit=True, endProgress=True)
 
 
 
