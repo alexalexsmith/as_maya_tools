@@ -16,11 +16,11 @@ If you need help with anything you can send an email to alex.animationtd@gmail.c
 
 # Tool List
 
-## Attributes
-### attribute switcher ui
+## UI
+### space switcher ui
 Ui for switching attributes while maintaining the objects transform position. Also knows as a spaceswitch tool
 ```
-from as_maya_tools.interface import attribute_switcher_ui;attribute_switcher_ui_instance = attribute_switcher_ui.AttributeSwitcherUI.load_ui()
+from as_maya_tools.interface import space_switcher_ui;space_switcher_ui_instance = space_switcher_ui.SpaceSwitcherUI.load_ui()
 ```
 
 ### noise settings ui
@@ -29,6 +29,25 @@ Ui for generating noise on attributes selected in the main channel box across ke
 from as_maya_tools.interface import noise_settings_ui;noise_settings_ui_instance = noise_settings_ui.NoiseGenerationSettingsUI.load_ui()
 ```
 
+### jiggle rig ui
+Ui for creating and managing jiggle rigs. jiggle rigs can be attached to any transformable or rotatable transform node.
+```
+from as_maya_tools.interface import jiggle_manager_ui;jiggle_manager_ui_instance = jiggle_manager_ui.JiggleRigsManagerUI.load_ui()
+```
+
+### Copy Paste Keyframes ui
+Copy and paste keyframes UI. You can copy and paste keyframes from 1 maya session to another using a variety of options
+```
+from as_maya_tools.interface import copy_paste_keyframe_ui;copy_paste_keyframe_ui_instance = copy_paste_keyframe_ui.CopyPasteKeyframesUI.load_ui()
+```
+### Selection Set Manager Ui
+Create and manage selection sets. You can organize your selection sets into folders. Selection sets are stored as .JSON files so they are easily shared
+```
+from as_maya_tools.interface import selection_set_manager_ui;selection_set_manager_ui_instance = selection_set_manager_ui.SelectionSetManagerUI.load_ui()
+```
+
+## Functions
+## Attributes
 ### reset transforms
 Set transforms on selected objects to default value
 ```
