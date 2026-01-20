@@ -334,6 +334,7 @@ class SpaceSwitcherUI(DockableMainWindowAbstract):
     def _callback_space_switch(self):
         """
         space switch all loaded attributes
+        TODO: we need to switch each attribute individually or give the space switch function a dict for each attribute and value to switch to
         """
         attribute_paths = []
         if len(self.attribute_tree_widget.attributes) < 1:

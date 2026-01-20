@@ -12,12 +12,11 @@ from as_maya_tools.utilities import timeline_utils
 FILE_EXTENSIONS = [".png", ".jpg", ".tiff"] # add more file formats here, must be PIL compatible
 IMAGESEQUENCE_REGREX = "^(.*)(?<!\d)(\d+)\.(\w+)$"
 
-# TODO: grab image sequence start and end and set the keyframes
 """
 possible features
 -attach to selected camera(if camera is selected)
 -polygon plane option maybe
--convert movie file to image sequence if possible. use RV? use ffmpeg?
+-convert movie file to image sequence if possible. use ffmpeg?
 """
 
 
@@ -81,9 +80,20 @@ def get_image_file_path(parent=None, **kwargs):
     :return str: file_path
     """
     file_extensions = " ".join(["*{}".format(extension) for extension in FILE_EXTENSIONS])
+
+    # get a default directory to open
     file_filter = "Image ({0})".format(file_extensions)
+    current_file_path = cmds.file(query=True, sceneName=True)
+    file_path = os.path.dirname(current_file_path)
+    default_directory = f"{file_path.split('maya')[0]}maya\sourceimages"
+
+    # If the sourceimages folder doesn't exist need a backup path to open to
+    if not os.path.isdir(default_directory):
+        default_directory = file_path
+    
     response = QtWidgets.QFileDialog().getOpenFileName(
         parent=parent,
+        dir=default_directory,
         caption="Import Image",
         filter=file_filter,
         initialFilter=file_filter

@@ -48,7 +48,6 @@ def chunk_list(list_item, chunk_size=1):
     for i in list(range(0, len(list_item), chunk_size)):
         yield list_item[i:i + chunk_size]
 
-
 @decorators.end_progress_bar_function
 def copy_keyframes(all_keyframes=False, **kwargs):
     """
@@ -107,9 +106,8 @@ def copy_keyframes(all_keyframes=False, **kwargs):
 
             # If no keyframes are found store the current value as backup
             current_value = cmds.getAttr(f"{node}.{attribute}")
-
-            key_frame_data = {}
             # only try to store keyframe data if there is any
+            key_frame_data = {}
             if key_frames:
                 for key_frame in key_frames:
 
@@ -122,6 +120,7 @@ def copy_keyframes(all_keyframes=False, **kwargs):
             value_data["current_value"] = current_value
             value_data["key_frame_data"] = key_frame_data
             attribute_data[attribute] = value_data
+
         animation_data[node] = attribute_data
 
         # store included nodes meta data
@@ -140,15 +139,18 @@ def copy_keyframes(all_keyframes=False, **kwargs):
     cmds.progressBar(main_progress_bar, edit=True, endProgress=True)
 
 
-@decorators.end_progress_bar_function
 @decorators.undoable_chunk
-def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, replace=False, **kwargs):
+@decorators.end_progress_bar_function
+def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, replace=False, search_replace=False, search_string="", replace_string="", **kwargs):
     """
     paste animation
     :param bool use_selection: option to use the current selection to paste keyframes
     :param bool use_current_time: option to paste animation using current time as offset
     :param bool reverse: option to reverse keyframes
     :param bool replace: option to replace animation in the keyframe range
+    :param bool search_replace: option to search and replace node names
+    :param str search_string: search string
+    :param str replace_string: replacement string
     """
     # read saved animation json file
     anim_data = json_utils.read_offset_json_file(KEYFRAME_DATA_PATH, COPY_KEYFRAME_DATA)
@@ -168,16 +170,20 @@ def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, re
     # determine the animation offset from original
     animation_offset = 0
     if use_current_time:
-        animation_offset = anim_data["keyframe_range"][0] - cmds.currentTime(query=True)
+        # if no keyframes are stored skip setting the animation offset
+        if anim_data["keyframe_range"]:
+            animation_offset = anim_data["keyframe_range"][0] - cmds.currentTime(query=True)
         
     main_progress_bar = performance_utils.progress_bar("pasting animation", len(nodes))
 
     for i, node in enumerate(nodes):
+        if search_replace:
+            node = node.replace(search_string, replace_string)
         # skip any object that doesn't exist in the current maya session
         if not performance_utils.obj_exists(node):
             continue
         
-        cmds.progressBar(main_progress_bar, edit=True, step=1, status=(f"pasting animtion to {node}"))
+        cmds.progressBar(main_progress_bar, edit=True,step=1, status=(f"pasting animtion to {node}"))
         
         node_key = list(anim_data["animation_data"])[
             i % len(anim_data["animation_data"])]  # animation data will loop until selected node list ends
@@ -191,31 +197,22 @@ def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, re
 
             # setting the order keyframes are applied
             key_frames_data = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"]
-
-            # use the current time stored value if no keyframes are stored
+            # use the stored value if no keyframes were saved
             if len(key_frames_data) == 0:
                 cmds.setAttr(
                     f"{node}.{attribute_key}",
                     anim_data["animation_data"][node_key][attribute_key]["current_value"])
                 continue
 
-            # Reverse keyframes
-            # TODO: this needs to reverse the curve not the keyframe list
-            key_frames = []
-            for key_frame_key in key_frames_data:
-                key_frames.append(key_frame_key)
-            if reverse:
-                reverse_keyframes = []
-                for key_frame in reversed(key_frames):
-                    reverse_keyframes.append(key_frame)
-                key_frames = reverse_keyframes
-
-
             # set keyframes on nodes
-            for key_frame, key_frame_key in zip(key_frames_data, key_frames):
+            for key_frame_key in key_frames_data:
 
                 # getting the keyframe time including any offsets
-                key_frame_time = float(key_frame) - animation_offset
+                key_frame_time = float(key_frame_key) - animation_offset
+                if reverse:
+                    min_key = float(next(iter(key_frames_data)))
+                    max_key = float(next(reversed(key_frames_data)))
+                    key_frame_time = ((min_key + max_key) - float(key_frame_key)) - animation_offset
 
                 set_keyframe(
                     node,
@@ -237,7 +234,6 @@ def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, re
                     anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["weighted_tangents"],
                 )
     cmds.progressBar(main_progress_bar, edit=True, endProgress=True)
-
 
 
 def get_keyframe_data(node, attribute, key_frame):
@@ -448,3 +444,44 @@ def set_keyframe(
         absolute=True,
         oy=oy,
         time=(key_frame, key_frame))
+        
+        
+def set_tween_keyframe(value):
+    """
+    set a tween keyframe between 2 keyframes
+    :param float value: value to tween by 0.0-1.0. value can also be negative for overshoots
+    """
+    # get list of animated attributes
+    # get the previous and next keyframe values
+    # run each value through equation to calculate the tween
+    nodes = cmds.ls(selection=True)
+    
+    if nodes is None or len(nodes) == 0:
+        performance_utils.message("no nodes specified to copy keyframes", position='midCenterTop', record_warning=True)
+        return
+        
+    current_time = cmds.currentTime(query=True)
+    
+    for node in nodes:
+        animatable_attributes = cmds.listAttr(node, keyable=True, unlocked=True, shortNames=True)
+        # skipping node if no animatable attributes are available
+        if not animatable_attributes or len(animatable_attributes) == 0:
+            continue
+            
+        for attribute in animatable_attributes:
+        
+            previous_keyframe = cmds.findKeyframe(f"{node}.{attribute}", which="previous")
+            next_keyframe = cmds.findKeyframe(f"{node}.{attribute}", which="next")
+            if not previous_keyframe:
+                continue
+            if not next_keyframe:
+                continue
+                
+            previous_keyframe_data = get_keyframe_data(node, attribute, previous_keyframe)
+            next_keyframe_data = get_keyframe_data(node, attribute, next_keyframe)
+            #cmds.keyframe(f"{node}.{attribute}", time=(current_time,), valueChange=previous_keyframe_data["value"]+((next_keyframe_data["value"]-previous_keyframe_data["value"])*value))
+            cmds.setKeyframe(
+                f"{node}.{attribute}",
+                time=(current_time,),
+                value=previous_keyframe_data["value"]+((next_keyframe_data["value"]-previous_keyframe_data["value"])*value))
+                

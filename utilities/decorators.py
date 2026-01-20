@@ -104,14 +104,13 @@ def base_animation_layer_unlock(func):
     """
     @wraps(func)
     def _wrapper_base_animation_layer_unlock(*args, **kwargs):
-        # unlock base animation layer before performing function
+        #function
         base_anim_layer_lock_value = False
-        if cmds.animLayer("BaseAnimation", query=True, exists=True):
-            if cmds.animLayer("BaseAnimation", query=True, lock=True):
-                base_anim_layer_lock_value = True
-                cmds.animLayer("BaseAnimation", edit=True, lock=False)
         try:
-            return func(*args, **kwargs)
+            if cmds.animLayer("BaseAnimation", query=True, exists=True):
+                if cmds.animLayer("BaseAnimation", query=True, lock=True):
+                    base_anim_layer_lock_value = True
+                    cmds.animLayer("BaseAnimation", edit=True, lock=False)
         except Exception:
             raise  # will raise original error
         finally:
@@ -119,7 +118,6 @@ def base_animation_layer_unlock(func):
                 cmds.animLayer("BaseAnimation", edit=True, lock=base_anim_layer_lock_value)
         
     return _wrapper_base_animation_layer_unlock
-
 
 def end_progress_bar_function(func):
     """

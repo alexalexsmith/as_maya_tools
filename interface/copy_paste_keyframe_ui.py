@@ -27,7 +27,10 @@ DEFAULT_COPY_PASTE_KEYFRAME_SETTINGS = \
         "all_keyframes": False,
         "use_selection": True,
         "use_current_time": True,
-        "reverse": False
+        "reverse": False,
+        "search_replace": False,
+        "search_string": "",
+        "replace_string": ""
     }
 
 
@@ -65,6 +68,13 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         self.use_current_time_checkbox.setText("Use Current Time")
         self.reverse_keyframes_checkbox = QtWidgets.QCheckBox(self)
         self.reverse_keyframes_checkbox.setText("Reverse Keyframes")
+        # search and replace widgets
+        self.search_and_replace_checkbox = QtWidgets.QCheckBox(self)
+        self.search_and_replace_checkbox.setText("Search and Replace")
+        self.search_line_edit = QtWidgets.QLineEdit()
+        self.search_line_edit.setPlaceholderText("Search")
+        self.replace_line_edit = QtWidgets.QLineEdit()
+        self.replace_line_edit.setPlaceholderText("Replace")
         # action buttons
         self.copy_button = QtWidgets.QPushButton("Copy Keyframes", self)
         self.paste_button = QtWidgets.QPushButton("Paste Keyframes", self)
@@ -75,6 +85,9 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         self.paste_settings_layout.addWidget(self.use_selection_checkbox)
         self.paste_settings_layout.addWidget(self.use_current_time_checkbox)
         self.paste_settings_layout.addWidget(self.reverse_keyframes_checkbox)
+        self.paste_settings_layout.addWidget(self.search_and_replace_checkbox)
+        self.paste_settings_layout.addWidget(self.search_line_edit)
+        self.paste_settings_layout.addWidget(self.replace_line_edit)
         self.paste_settings_groupbox.setLayout(self.paste_settings_layout)
         # build action layout
         self.action_layout.addWidget(self.copy_button)
@@ -118,6 +131,9 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         self.use_selection_checkbox.setChecked(settings["use_selection"])
         self.use_current_time_checkbox.setChecked(settings["use_current_time"])
         self.reverse_keyframes_checkbox.setChecked(settings["reverse"])
+        self.search_and_replace_checkbox.setChecked(settings["search_replace"])
+        self.search_line_edit.setText(settings["search_string"])
+        self.replace_line_edit.setText(settings["replace_string"])
 
     def _is_corrupt_settings(self, default_settings, settings):
         """
@@ -142,6 +158,9 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         copy_paste_keyframe_settings["use_selection"] = self.use_selection_checkbox.isChecked()
         copy_paste_keyframe_settings["use_current_time"] = self.use_current_time_checkbox.isChecked()
         copy_paste_keyframe_settings["reverse"] = self.reverse_keyframes_checkbox.isChecked()
+        copy_paste_keyframe_settings["search_replace"] = self.search_and_replace_checkbox.isChecked()
+        copy_paste_keyframe_settings["search_string"] = self.search_line_edit.text()
+        copy_paste_keyframe_settings["replace_string"] = self.replace_line_edit.text()
         json_utils.write_json_file(COPY_PASTE_KEYFRAME_SETTINGS_PATH, "copy_paste_keyframe_settings",
                                    copy_paste_keyframe_settings)
 
@@ -154,6 +173,9 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         self.use_selection_checkbox.stateChanged.connect(self._update_settings)
         self.use_current_time_checkbox.stateChanged.connect(self._update_settings)
         self.reverse_keyframes_checkbox.stateChanged.connect(self._update_settings)
+        self.search_and_replace_checkbox.stateChanged.connect(self._update_settings)
+        self.search_line_edit.textChanged.connect(self._update_settings)
+        self.replace_line_edit.textChanged.connect(self._update_settings)
         # actions
         self.copy_button.pressed.connect(self._callback_copy_keyframe_action)
         self.paste_button.pressed.connect(self._callback_paste_keyframe_action)

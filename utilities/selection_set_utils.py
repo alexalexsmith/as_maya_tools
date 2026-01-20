@@ -44,7 +44,7 @@ def delete_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
         os.remove(file_path)
 
 
-def get_selection_set(sub_folder=None, file_name="selection_set", scene_namespace=None, **kwargs):
+def get_selection_set(sub_folder=None, file_name="selection_set", scene_namespace = None, **kwargs):
     """
     Returns list of nodes from the given selection set
     :param str sub_folder: Sub-folder within the selection set directory
@@ -83,21 +83,6 @@ def get_selection_set(sub_folder=None, file_name="selection_set", scene_namespac
             if performance_utils.obj_exists(node):
                 selection_set.append(node)
     return selection_set
-
-
-def search_and_replace(selection_set, search_string, replace_string, **kwargs):
-    """
-    search and replace a list of node names
-    :param list[str] selection_set: selection set list
-    :param str search_string: string to search
-    :param str replace_string: string to replace
-    :return list[str]: the list with replaced string
-    """
-    replaced_selection_set = []
-    for item in selection_set:
-        item.replace(search_string, replace_string)
-        replaced_selection_set.append(item)
-    return replaced_selection_set
 
 
 def get_namespaces_from_nodes(nodes):
