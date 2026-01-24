@@ -15,7 +15,7 @@ def get_keyframe_list(frame_range="selected_key_range", frequency=1, **kwargs):
     Get a list of keyframes with a specified frequency
     :param str frame_range: animation_range, playback_range, selected_key_range string options
     :param int frequency: separation between keyframes
-    :return list(list(int)): list of keyframes TODO: make it return a list(int)
+    :return list(list(int)): list of keyframes
     """
     keyframe_range_options = ["animation_range", "playback_range", "selected_key_range"]
     if frame_range not in keyframe_range_options:
@@ -47,6 +47,7 @@ def chunk_list(list_item, chunk_size=1):
 
     for i in list(range(0, len(list_item), chunk_size)):
         yield list_item[i:i + chunk_size]
+
 
 @decorators.end_progress_bar_function
 def copy_keyframes(all_keyframes=False, **kwargs):
@@ -209,27 +210,52 @@ def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, re
 
                 # getting the keyframe time including any offsets
                 key_frame_time = float(key_frame_key) - animation_offset
+
+                # gathering keyframe data in case we need to manipulate the data before applying the keyframes
+                in_tangent_key = "in_tangent"
+                out_tangent_key = "out_tangent"
+                in_angle = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["in_angle"]
+                out_angle = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["out_angle"]
+                in_weight_key = "in_weight"
+                out_weight_key = "out_weight"
+                ix = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["ix"]
+                iy = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["iy"]
+                ox = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["ox"]
+                oy = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["oy"]
                 if reverse:
+                    # calculate reversed keyframe time
                     min_key = float(next(iter(key_frames_data)))
                     max_key = float(next(reversed(key_frames_data)))
                     key_frame_time = ((min_key + max_key) - float(key_frame_key)) - animation_offset
+
+                    # reverse tangent data
+                    in_tangent_key = "out_tangent"
+                    out_tangent_key = "in_tangent"
+                    in_angle = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["out_angle"] * -1
+                    out_angle = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["in_angle"] * -1
+                    in_weight_key = "out_weight"
+                    out_weight_key = "in_weight"
+                    ix = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["ox"]
+                    iy = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["oy"] * -1
+                    ox = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["ix"]
+                    oy = anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["iy"] * -1
 
                 set_keyframe(
                     node,
                     attribute_key,
                     key_frame_time,
                     anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["value"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["in_tangent"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["out_tangent"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["in_angle"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["in_weight"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["ix"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["iy"],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key][in_tangent_key],
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key][out_tangent_key],
+                    in_angle,
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key][in_weight_key],
+                    ix,
+                    iy,
                     anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["lock"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["out_angle"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["out_weight"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["ox"],
-                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["oy"],
+                    out_angle,
+                    anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key][out_weight_key],
+                    ox,
+                    oy,
                     anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["weight_lock"],
                     anim_data["animation_data"][node_key][attribute_key]["key_frame_data"][key_frame_key]["weighted_tangents"],
                 )

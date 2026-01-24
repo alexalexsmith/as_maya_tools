@@ -1,12 +1,12 @@
 """
 Copy/Paste settings ui
 COPY arguments:
--all_keyframes: bool
+-all_keyframes: bool (copy all keyframes option. If false it will use the selected keyframes)
 PASTE arguments:
--use_selection: bool
--use_current_time: bool
--replace: bool (not implemented in backend yet)
--reverse: bool (not implemented in backend yet)
+-use_selection: bool (option to use the current selection. If false it will use the node names stored )
+-use_current_time: bool (option to apply the animation at the current time. if false it will use the stored time)
+-replace: bool (option to remove the current animation in the frame range before applying animation TODO:not implemented in backend yet)
+-reverse: bool (option to reverse the animation when applying. Reverse is applied to the keyframe position and tangent positions, not the value)
 """
 try:
     from PySide2 import QtWidgets, QtCore, QtGui
