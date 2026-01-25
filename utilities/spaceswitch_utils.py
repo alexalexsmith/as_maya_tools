@@ -10,18 +10,16 @@ SPACESWITCH_FRAMERANGE_OPTIONS = ["Current Frame", "Selected Frames", "Time Slid
 
 @decorators.suspend_refresh
 @decorators.undoable_chunk
-def space_switch(attribute_paths, value, frame_range="current frame", keyed_frames=False):
+def space_switch(attributes_values_dict, frame_range="current frame", keyed_frames=False):
     """
     maintain transform position after changing an attribute.
-    :param str attribute_path:  attribute path
+    :param dict attributes_values_dict:  attribute path
     :param float/int value: new value to set attribute to
     """
-    if not isinstance(attribute_paths, list):
-        attribute_paths = (attribute_paths)
     
-    # Get a list of keyframes to perform switch over. This will set the same keyframes accross all attributes passed
+    # Get a list of keyframes to perform switch over. This will set the same keyframes on all attributes passed
     keyframes = []
-    for attribute_path in attribute_paths:
+    for attribute_path in attributes_values_dict:
         attribute_object = attribute_utils.Attribute(attribute_path)
         keyframes += get_keyframe_range(attribute_object, frame_range=frame_range, keyed_frames=keyed_frames)
     
@@ -31,15 +29,15 @@ def space_switch(attribute_paths, value, frame_range="current frame", keyed_fram
     # TODO: if switching all frames, need to first bake all motion then switch
     if not keyed_frames:
         for frame in keyframes:
-            for attribute_path in attribute_paths:
+            for attribute_path in attributes_values_dict:
                 cmds.currentTime(frame, edit=True)
                 cmds.setKeyframe(attribute_object.node)
     
     for frame in keyframes:
         cmds.currentTime(frame, edit=True)
-        for attribute_path in attribute_paths:
+        for attribute_path in attributes_values_dict:
             attribute_object = attribute_utils.Attribute(attribute_path)
-            do_space_switch(attribute_object, value)
+            do_space_switch(attribute_object, attributes_values_dict[attribute_path])
             continue
 
 

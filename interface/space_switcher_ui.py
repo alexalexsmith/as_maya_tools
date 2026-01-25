@@ -22,6 +22,7 @@ from maya import cmds
 from as_maya_tools.utilities.qt_utils import DockableMainWindowAbstract, TreeWidgetRightClickSupportAbstract
 from as_maya_tools.utilities import json_utils, attribute_utils, spaceswitch_utils, performance_utils
 from as_maya_tools import SPACE_SWITCHER_SETTINGS_PATH, STYLE_SHEETS_PATH
+from as_maya_tools.stylesheets import guiResources
 
 
 
@@ -163,7 +164,7 @@ class SpaceSwitcherUI(DockableMainWindowAbstract):
 
     Q_OBJECT_NAME = "space_switcher"
     
-    #STYLE_SHEET_PATH = "{0}/Combinear.qss".format(STYLE_SHEETS_PATH)
+    STYLE_SHEET_PATH = "{0}/theme/Flat/Dark/Cyan/Pink.qss".format(STYLE_SHEETS_PATH)
     
     def __init__(self, parent=None):
         super(SpaceSwitcherUI, self).__init__(parent)
@@ -339,13 +340,15 @@ class SpaceSwitcherUI(DockableMainWindowAbstract):
         attribute_paths = []
         if len(self.attribute_tree_widget.attributes) < 1:
             return
-            
+        attributes_values_dict = {}
         for attribute_item in self.attribute_tree_widget.attributes:
+            attributes_values_dict[attribute_item.attribute_path] = attribute_item.get_attribute_control_value()
             attribute_paths.append(attribute_item.attribute_path)
             
         spaceswitch_utils.space_switch(
-            attribute_paths,
-            attribute_item.get_attribute_control_value(),
+            attributes_values_dict,
+            #attribute_paths,
+            #attribute_item.get_attribute_control_value(),
             frame_range=self.framerange_options_combo_box.currentText(),
             keyed_frames=self.keyed_frames_checkbox.isChecked()
         )
