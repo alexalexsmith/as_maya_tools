@@ -44,44 +44,68 @@ def delete_selection_set(sub_folder=None, file_name="selection_set", **kwargs):
         os.remove(file_path)
 
 
-def get_selection_set(sub_folder=None, file_name="selection_set", scene_namespace = None, **kwargs):
+def get_selection_set(
+        sub_folder=None,
+        file_name="selection_set",
+        use_file_namespace=False,
+        use_selected_namespace=True,
+        use_scene_namespace=False,
+        scene_namespace="",
+        search_and_replace=False,
+        search_string="",
+        replace_string="",
+        **kwargs):
     """
     Returns list of nodes from the given selection set
     :param str sub_folder: Sub-folder within the selection set directory
     :param str file_name: Name of the selection set
+    :param bool use_selected_namespace: option to use the namespace of selected nodes
     :param str scene_namespace: namespace to overide stored namespace 
     """
     directory = SELECTION_SET_DIRECTORY
-    
     if sub_folder:
         directory = os.path.join(directory, sub_folder)
     selection_set_data = json_utils.read_offset_json_file(directory, file_name)
 
-    namespaces = [scene_namespace]
-    if scene_namespace is None:
+    namespaces = None
+    if use_scene_namespace:
+            namespaces = [scene_namespace]
+
+    if use_selected_namespace:
         selected_nodes = cmds.ls(selection=True)
         namespaces = get_namespaces_from_nodes(selected_nodes)
-        
+
     selection_set = []
     for node in selection_set_data:
-        if not selection_set_data[node]["namespace"]:
+
+        # storing nodes base name for search and replace. for now only using replace on base name
+        name_space = selection_set_data[node]["namespace"]
+        node_base_name = selection_set_data[node]["name"]
+        if search_and_replace:
+            node_base_name = node_base_name.replace(search_string, replace_string)
+
+        # adding any nodes without a namespace first
+        if not name_space:
             # Any nodes in the selection set without a namespace are added directly, If they currently exist
-            if performance_utils.obj_exists(node):
-                selection_set.append(node)
+            if performance_utils.obj_exists(node_base_name):
+                selection_set.append(node_base_name)
             continue
+
+        # rebuilding node name with namespace if namespaces are supplied
         if namespaces:
             # Replace stored namespace with selected nodes namespaces
             for namespace in namespaces:
                 # Rebuild the control name with the namespaces of selected nodes
-                rebuilt_name = "{0}:{1}".format(namespace, selection_set_data[node]["name"])
+                rebuilt_name = "{0}:{1}".format(namespace, node_base_name)
                 # Only add the node if it currently exists
                 if performance_utils.obj_exists(rebuilt_name):
                     selection_set.append(rebuilt_name)
         else:
             # Use the stored namespace if no nodes with namespaces are selected
+            rebuilt_node_name = f"{name_space}:{node_base_name}"
             # Only add the node if it currently exists
-            if performance_utils.obj_exists(node):
-                selection_set.append(node)
+            if performance_utils.obj_exists(rebuilt_node_name):
+                selection_set.append(rebuilt_node_name)
     return selection_set
 
 

@@ -21,9 +21,14 @@ from as_maya_tools.stylesheets import guiResources
 
 DEFAULT_SELECTION_SET_MANAGER_SETTINGS = \
     {
-        "selection_set_folder": "",
+        "sub_folder": "",
+        "use_file_namespace": True,
+        "use_selected_namespace": False,
         "use_scene_namespace": False,
-        "scene_namespace": None
+        "scene_namespace": "",
+        "search_and_replace": False,
+        "search_string": "",
+        "replace_string": ""
     }
 
 
@@ -99,8 +104,6 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         self.use_file_namespace_button = QtWidgets.QRadioButton("Use File Namespace", self)
         self.use_selection_namespace_button = QtWidgets.QRadioButton("Use Selection Namespace", self)
         self.use_scene_namespace_button = QtWidgets.QRadioButton("Use Scene Namespace", self)
-        self.use_scene_namespace_checkbox = QtWidgets.QCheckBox(self)
-        self.use_scene_namespace_checkbox.setText("Use Scene Namespace")
         self.scene_namespaces_combobox = QtWidgets.QComboBox(self)
         self.name_space_combo_box_items = []  # NOTE: this is a var to store combo box items as a list of strings
         # search and replace settings widgets
@@ -127,8 +130,7 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         self.namespace_settings_layout.addWidget(self.use_file_namespace_button)
         self.namespace_settings_layout.addWidget(self.use_selection_namespace_button)
         self.namespace_settings_layout.addWidget(
-            self.use_scene_namespace_button)  # TODO: revise ui functions so these manage the namespace options
-        self.namespace_settings_layout.addWidget(self.use_scene_namespace_checkbox)
+            self.use_scene_namespace_button)
         self.namespace_settings_layout.addWidget(self.scene_namespaces_combobox)
         self.namespace_settings_groupbox.setLayout(self.namespace_settings_layout)
         # search and replace settings layout
@@ -190,6 +192,7 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         self._callback_init_selection_set_manager_settings(settings=selection_set_manager_settings)
 
         self._callback_use_scene_namespace()
+        self._callback_search_and_replace()
         self._callback_populate_tree_view()
 
     def _setup_socket_connections(self):
@@ -197,9 +200,14 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         setup socket connections
         """
         # ui callbacks
-        self.use_scene_namespace_checkbox.stateChanged.connect(self._callback_use_scene_namespace)
+        self.use_file_namespace_button.toggled.connect(self._callback_update_settings_file)
+        self.use_selection_namespace_button.toggled.connect(self._callback_update_settings_file)
+        self.use_scene_namespace_button.toggled.connect(self._callback_use_scene_namespace)
         self.set_folder_combobox.currentTextChanged.connect(self._callback_selection_set_folder_changed)
         self.scene_namespaces_combobox.currentTextChanged.connect(self._callback_update_settings_file)
+        self.search_and_replace_checkbox.stateChanged.connect(self._callback_search_and_replace)
+        self.search_line_edit.textChanged.connect(self._callback_update_settings_file)
+        self.replace_line_edit.textChanged.connect(self._callback_update_settings_file)
         # treeview callbacks
         self.selection_set_treeview.create_new_selection_set_action.triggered.connect(
             self._show_selection_set_create_dialog)
@@ -207,9 +215,11 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
             self._callback_delete_selectionset_action_triggered)
         self.selection_set_treeview.clicked.connect(self._callback_select_selection_set_nodes)
         self.selection_set_treeview.itemSelectionChanged.connect(self._callback_select_selection_set_nodes)
+
         # button callbacks
         self.delete_selection_set_button.pressed.connect(self._callback_delete_selectionset_action_triggered)
         self.delete_set_folder_button.pressed.connect(self._callback_delete_folder_action_triggered)
+
         # dialog callbacks
         self.new_set_folder_button.pressed.connect(self._show_selection_set_create_folder_dialog)
         self.create_selection_set_button.pressed.connect(self._show_selection_set_create_dialog)
@@ -229,13 +239,22 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         settings = json_utils.read_offset_json_file(SELECTION_SET_MANAGER_SETTINGS_PATH,
                                                     "selection_set_manager_settings")
         # If the settings is "" then we do nothing
-        if not settings["selection_set_folder"] == "":
+        if not settings["sub_folder"] == "":
             # if the folder doesn't exist then we do nothing
-            if settings["selection_set_folder"] in os.listdir(SELECTION_SET_DIRECTORY):
-                self.set_folder_combobox.setCurrentText(settings["selection_set_folder"])
-        self.use_scene_namespace_checkbox.setChecked(settings["use_scene_namespace"])
+            if settings["sub_folder"] in os.listdir(SELECTION_SET_DIRECTORY):
+                self.set_folder_combobox.setCurrentText(settings["sub_folder"])
+
+        self.use_file_namespace_button.setChecked(settings["use_file_namespace"])
+        self.use_selection_namespace_button.setChecked(settings["use_selected_namespace"])
+        self.use_scene_namespace_button.setChecked(settings["use_scene_namespace"])
+
+        # set the combo box namespace text
         if settings["scene_namespace"] in self.name_space_combo_box_items:
             self.scene_namespaces_combobox.setCurrentText(settings["scene_namespace"])
+
+        self.search_and_replace_checkbox.setChecked(settings["search_and_replace"])
+        self.search_line_edit.setText(settings["search_string"])
+        self.replace_line_edit.setText(settings["replace_string"])
 
     def _is_corrupt_settings(self, default_settings, settings):
         """
@@ -256,9 +275,14 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         update settings file
         """
         selection_set_manager_settings = {}
-        selection_set_manager_settings["selection_set_folder"] = self.set_folder_combobox.currentText()
-        selection_set_manager_settings["use_scene_namespace"] = self.use_scene_namespace_checkbox.isChecked()
+        selection_set_manager_settings["use_file_namespace"] = self.use_file_namespace_button.isChecked()
+        selection_set_manager_settings["use_selected_namespace"] = self.use_selection_namespace_button.isChecked()
+        selection_set_manager_settings["sub_folder"] = self.set_folder_combobox.currentText()
+        selection_set_manager_settings["use_scene_namespace"] = self.use_scene_namespace_button.isChecked()
         selection_set_manager_settings["scene_namespace"] = self.scene_namespaces_combobox.currentText()
+        selection_set_manager_settings["search_and_replace"] = self.search_and_replace_checkbox.isChecked()
+        selection_set_manager_settings["search_string"] = self.search_line_edit.text()
+        selection_set_manager_settings["replace_string"] = self.replace_line_edit.text()
         json_utils.write_json_file(SELECTION_SET_MANAGER_SETTINGS_PATH, "selection_set_manager_settings",
                                    selection_set_manager_settings)
 
@@ -286,7 +310,15 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         """
         use scene namespace callback
         """
-        self.scene_namespaces_combobox.setEnabled(self.use_scene_namespace_checkbox.isChecked())
+        self.scene_namespaces_combobox.setEnabled(self.use_scene_namespace_button.isChecked())
+        self._callback_update_settings_file()
+
+    def _callback_search_and_replace(self):
+        """
+        search and replace option check state callback action
+        """
+        self.search_line_edit.setEnabled(self.search_and_replace_checkbox.isChecked())
+        self.replace_line_edit.setEnabled(self.search_and_replace_checkbox.isChecked())
         self._callback_update_settings_file()
 
     def _callback_populate_selection_set_folder_combobox(self):
@@ -389,16 +421,14 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         """
         Select selection set nodes based on treeview selection
         """
-        sub_folder = self.set_folder_combobox.currentText()
         nodes = list()
-        scene_namespace = None
-        if self.use_scene_namespace_checkbox.isChecked():
-            scene_namespace = self.scene_namespaces_combobox.currentText()
+        settings = json_utils.read_offset_json_file(SELECTION_SET_MANAGER_SETTINGS_PATH,
+                                                    "selection_set_manager_settings")
+
         for file_name in self._get_selected_selection_sets_from_tree_view():
             nodes += selection_set_utils.get_selection_set(
-                sub_folder=sub_folder,
                 file_name=file_name,
-                scene_namespace=scene_namespace
+                **settings
             )
         cmds.select(clear=True)
         cmds.select(nodes, add=True)
