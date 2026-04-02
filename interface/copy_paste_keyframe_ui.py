@@ -16,7 +16,7 @@ except ModuleNotFoundError:
     from shiboken6 import wrapInstance
 
 from as_maya_tools.utilities.qt_utils import DockableMainWindowAbstract
-from as_maya_tools.utilities import json_utils, performance_utils
+from as_maya_tools.utilities import json_utils, maya_node_utils, maya_utils
 from as_maya_tools.animation import timeline
 from as_maya_tools import COPY_PASTE_KEYFRAME_SETTINGS_PATH, STYLE_SHEETS_PATH
 from as_maya_tools.stylesheets import guiResources
@@ -57,6 +57,8 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         self.paste_settings_groupbox.setTitle("Paste Settings")
         self.copy_settings_layout = QtWidgets.QVBoxLayout(self)
         self.paste_settings_layout = QtWidgets.QVBoxLayout(self)
+        self.search_layout = QtWidgets.QHBoxLayout(self)
+        self.replace_layout = QtWidgets.QHBoxLayout(self)
         self.action_layout = QtWidgets.QHBoxLayout(self)
         # copy setting widgets
         self.all_keyframes_checkbox = QtWidgets.QCheckBox(self)
@@ -73,21 +75,30 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         self.search_and_replace_checkbox.setText("Search and Replace")
         self.search_line_edit = QtWidgets.QLineEdit()
         self.search_line_edit.setPlaceholderText("Search")
+        self.search_use_selected_namespace_button = QtWidgets.QPushButton("Use Selected Namespace", self)
+        
         self.replace_line_edit = QtWidgets.QLineEdit()
         self.replace_line_edit.setPlaceholderText("Replace")
+        self.replace_use_selected_namespace_button = QtWidgets.QPushButton("Use Selected Namespace", self)
+        
         # action buttons
         self.copy_button = QtWidgets.QPushButton("Copy Keyframes", self)
         self.paste_button = QtWidgets.QPushButton("Paste Keyframes", self)
         # build copy settings layout
         self.copy_settings_layout.addWidget(self.all_keyframes_checkbox)
         self.copy_settings_groupbox.setLayout(self.copy_settings_layout)
+        # build search and replace layouts
+        self.search_layout.addWidget(self.search_line_edit)
+        self.search_layout.addWidget(self.search_use_selected_namespace_button)
+        self.replace_layout.addWidget(self.replace_line_edit)
+        self.replace_layout.addWidget(self.replace_use_selected_namespace_button)
         # build paste settings layout
         self.paste_settings_layout.addWidget(self.use_selection_checkbox)
         self.paste_settings_layout.addWidget(self.use_current_time_checkbox)
         self.paste_settings_layout.addWidget(self.reverse_keyframes_checkbox)
         self.paste_settings_layout.addWidget(self.search_and_replace_checkbox)
-        self.paste_settings_layout.addWidget(self.search_line_edit)
-        self.paste_settings_layout.addWidget(self.replace_line_edit)
+        self.paste_settings_layout.addLayout(self.search_layout)
+        self.paste_settings_layout.addLayout(self.replace_layout)
         self.paste_settings_groupbox.setLayout(self.paste_settings_layout)
         # build action layout
         self.action_layout.addWidget(self.copy_button)
@@ -174,6 +185,8 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         self.use_current_time_checkbox.stateChanged.connect(self._update_settings)
         self.reverse_keyframes_checkbox.stateChanged.connect(self._update_settings)
         self.search_and_replace_checkbox.stateChanged.connect(self._update_settings)
+        self.search_use_selected_namespace_button.pressed.connect(self._callback_searchline_use_selected_namespace)
+        self.replace_use_selected_namespace_button.pressed.connect(self._callback_replaceline_use_selected_namespace)
         self.search_line_edit.textChanged.connect(self._update_settings)
         self.replace_line_edit.textChanged.connect(self._update_settings)
         # actions
@@ -186,7 +199,7 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         :return:
         """
         timeline.copy_keyframes()
-        performance_utils.message(message="Copied Keyframes", record_warning=False)
+        maya_utils.message(message="Copied Keyframes", record_warning=False)
 
     def _callback_paste_keyframe_action(self):
         """
@@ -194,4 +207,22 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         :return:
         """
         timeline.paste_keyframes()
-        performance_utils.message(message="Pasted Keyframes", record_warning=False)
+        maya_utils.message(message="Pasted Keyframes", record_warning=False)
+
+    def _callback_searchline_use_selected_namespace(self):
+        """
+        search line use selected namespace action
+        """
+        namespace = maya_node_utils.get_namespace_from_selection()
+        if namespace is None:
+            return 
+        self.search_line_edit.setText(namespace)
+        
+    def _callback_replaceline_use_selected_namespace(self):
+        """
+        replace line use selected namespace action
+        """
+        namespace = maya_node_utils.get_namespace_from_selection()
+        if namespace is None:
+            return
+        self.replace_line_edit.setText(namespace)

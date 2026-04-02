@@ -20,7 +20,7 @@ except ModuleNotFoundError:
 from maya import cmds
 
 from as_maya_tools.utilities.qt_utils import DockableMainWindowAbstract, TreeWidgetRightClickSupportAbstract
-from as_maya_tools.utilities import json_utils, attribute_utils, spaceswitch_utils, performance_utils
+from as_maya_tools.utilities import json_utils, attribute_utils, spaceswitch_utils, maya_utils
 from as_maya_tools import SPACE_SWITCHER_SETTINGS_PATH, STYLE_SHEETS_PATH
 from as_maya_tools.stylesheets import guiResources
 
@@ -86,7 +86,7 @@ class AttributeTreeWidget(TreeWidgetRightClickSupportAbstract):
         for attribute in self.attributes:
             if attribute_path == attribute.attribute_path:
                 return
-        if not performance_utils.obj_exists(attribute_path):
+        if not maya_utils.obj_exists(attribute_path):
             return
         attribute_control = self.get_attribute_control(attribute_path)
         if attribute_control:
@@ -313,7 +313,7 @@ class SpaceSwitcherUI(DockableMainWindowAbstract):
                 return
             for attribute in selected_attributes:
                 attribute_path = "{0}.{1}".format(node, attribute)
-                if not performance_utils.obj_exists(attribute_path):
+                if not maya_utils.obj_exists(attribute_path):
                     continue
                 self.attribute_tree_widget.add_attribute_item(attribute_path)
         self._update_settings()

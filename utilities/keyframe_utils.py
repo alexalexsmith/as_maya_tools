@@ -3,7 +3,7 @@ Utilities for dealing with keyframes in maya
 """
 from maya import cmds, mel
 
-from as_maya_tools.utilities import timeline_utils, json_utils, performance_utils, maya_node_utils, decorators
+from as_maya_tools.utilities import timeline_utils, json_utils, maya_utils, maya_node_utils, decorators
 from as_maya_tools import KEYFRAME_DATA_PATH
 
 
@@ -57,7 +57,7 @@ def copy_keyframes(all_keyframes=False, **kwargs):
     """
     nodes = cmds.ls(selection=True)
     if nodes is None or len(nodes) == 0:
-        performance_utils.message("no nodes specified to copy keyframes", position='midCenterTop', record_warning=True)
+        maya_utils.message("no nodes specified to copy keyframes", position='midCenterTop', record_warning=True)
         return
 
     main_data = {}
@@ -76,7 +76,7 @@ def copy_keyframes(all_keyframes=False, **kwargs):
         if cmds.timeControl(gPlayBackSlider, query=True, rangeVisible=True):
             frame_range = cmds.timeControl(gPlayBackSlider, query=True, rangeArray=True)
             
-    main_progress_bar = performance_utils.progress_bar("copying animation", len(nodes))
+    main_progress_bar = maya_utils.progress_bar("copying animation", len(nodes))
     
     for node in nodes:
         cmds.progressBar(main_progress_bar, edit=True,step=1, status=(f"copying animation from {node}"))
@@ -129,7 +129,7 @@ def copy_keyframes(all_keyframes=False, **kwargs):
 
     # avoid writing out empty data if no keyframe data was extracted
     if len(nodes_meta) == 0:
-        performance_utils.message("no keyframe data was found", position='midCenterTop', record_warning=True)
+        maya_utils.message("no keyframe data was found", position='midCenterTop', record_warning=True)
         return
 
     main_data["nodes"] = nodes_meta
@@ -161,11 +161,11 @@ def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, re
     if use_selection:
         nodes = cmds.ls(selection=True)
     if nodes is None or len(nodes) == 0:
-        performance_utils.message("no nodes specified to paste keyframes", position='midCenterTop', record_warning=True)
+        maya_utils.message("no nodes specified to paste keyframes", position='midCenterTop', record_warning=True)
         return
 
     if not anim_data:
-        performance_utils.message("no copied keyframe data found", position='midCenterTop', record_warning=True)
+        maya_utils.message("no copied keyframe data found", position='midCenterTop', record_warning=True)
         return
 
     # determine the animation offset from original
@@ -175,13 +175,13 @@ def paste_keyframes(use_selection=True, use_current_time=True, reverse=False, re
         if anim_data["keyframe_range"]:
             animation_offset = anim_data["keyframe_range"][0] - cmds.currentTime(query=True)
         
-    main_progress_bar = performance_utils.progress_bar("pasting animation", len(nodes))
+    main_progress_bar = maya_utils.progress_bar("pasting animation", len(nodes))
 
     for i, node in enumerate(nodes):
         if search_replace:
             node = node.replace(search_string, replace_string)
         # skip any object that doesn't exist in the current maya session
-        if not performance_utils.obj_exists(node):
+        if not maya_utils.obj_exists(node):
             continue
         
         cmds.progressBar(main_progress_bar, edit=True,step=1, status=(f"pasting animtion to {node}"))
@@ -483,7 +483,7 @@ def set_tween_keyframe(value):
     nodes = cmds.ls(selection=True)
     
     if nodes is None or len(nodes) == 0:
-        performance_utils.message("no nodes specified to copy keyframes", position='midCenterTop', record_warning=True)
+        maya_utils.message("no nodes specified to copy keyframes", position='midCenterTop', record_warning=True)
         return
         
     current_time = cmds.currentTime(query=True)

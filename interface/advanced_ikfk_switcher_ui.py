@@ -12,7 +12,7 @@ from maya import cmds
 from maya.api import OpenMaya
 
 from as_maya_tools.utilities.qt_utils import DockableMainWindowAbstract
-from as_maya_tools.utilities import json_utils, attribute_utils, spaceswitch_utils, performance_utils
+from as_maya_tools.utilities import json_utils, attribute_utils, spaceswitch_utils, maya_utils
 from as_maya_tools.utilities import json_utils
 from as_maya_tools import STYLE_SHEETS_PATH
 from as_maya_tools.stylesheets import guiResources

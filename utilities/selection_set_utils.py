@@ -5,7 +5,7 @@ import os
 
 from maya import cmds
 
-from as_maya_tools.utilities import json_utils, performance_utils
+from as_maya_tools.utilities import json_utils, maya_utils
 from as_maya_tools import SELECTION_SET_DIRECTORY
 
 
@@ -87,7 +87,7 @@ def get_selection_set(
         # adding any nodes without a namespace first
         if not name_space:
             # Any nodes in the selection set without a namespace are added directly, If they currently exist
-            if performance_utils.obj_exists(node_base_name):
+            if maya_utils.obj_exists(node_base_name):
                 selection_set.append(node_base_name)
             continue
 
@@ -98,13 +98,13 @@ def get_selection_set(
                 # Rebuild the control name with the namespaces of selected nodes
                 rebuilt_name = "{0}:{1}".format(namespace, node_base_name)
                 # Only add the node if it currently exists
-                if performance_utils.obj_exists(rebuilt_name):
+                if maya_utils.obj_exists(rebuilt_name):
                     selection_set.append(rebuilt_name)
         else:
             # Use the stored namespace if no nodes with namespaces are selected
             rebuilt_node_name = f"{name_space}:{node_base_name}"
             # Only add the node if it currently exists
-            if performance_utils.obj_exists(rebuilt_node_name):
+            if maya_utils.obj_exists(rebuilt_node_name):
                 selection_set.append(rebuilt_node_name)
     return selection_set
 

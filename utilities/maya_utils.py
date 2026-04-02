@@ -1,5 +1,6 @@
 """
-Functions that speed up maya or replace maya cmds for better performance
+Functions that replace maya functions for speed
+Common maya functions to reduce redundancies or forcing everything to be included in an object
 """
 
 import maya.api.OpenMaya as OpenMaya
@@ -47,6 +48,37 @@ def message(message, position='midCenterTop', record_warning=True):
         cmds.warning(message)
         
         
+def get_current_camera():
+    '''
+    Returns the camera that you're currently looking through.
+    If the current highlighted panel isn't a modelPanel,
+    '''
+
+    panel = cmds.getPanel(withFocus=True)
+
+    if cmds.getPanel(typeOf=panel) != 'modelPanel':
+        #just get the first visible model panel we find, hopefully the correct one.
+        for p in cmds.getPanel(visiblePanels=True):
+            if cmds.getPanel(typeOf=p) == 'modelPanel':
+                panel = p
+                cmds.setFocus(panel)
+                break
+
+    if cmds.getPanel(typeOf=panel) != 'modelPanel':
+        OpenMaya.MGlobal.displayWarning('Please highlight a camera viewport.')
+        return False
+
+    camShape = cmds.modelEditor(panel, query=True, camera=True)
+    if not camShape:
+        return False
+
+    camNodeType = cmds.nodeType(camShape)
+    if cmds.nodeType(camShape) == 'transform':
+        return camShape
+    elif cmds.nodeType(camShape) in ['camera','stereoRigCamera']:
+        return cmds.listRelatives(camShape, parent=True, path=True)[0]   
+        
+        
 def progress_bar(status_string, max_value):
     """maya's main progress bar at lower left hand corner
     :param str status_string: status string when beginProgress is True
@@ -59,26 +91,29 @@ def progress_bar(status_string, max_value):
                      beginProgress=True,
                      isInterruptable=True,
                      status=status_string,
-                     maxValue=max_value)
+                     max_value=max_value)
     return gMainProgressBar
     
     
 class Dragger(object):
-
+    """
+    Dragger tool abstract. Used to run functions using the mouse drag to adjust values
+    """
     def __init__(self,
                  name = 'mlDraggerContext',
                  title = 'Dragger',
-                 defaultValue=0,
-                 minValue=None,
-                 maxValue=None,
+                 default_value=0,
+                 min_value=None,
+                 max_value=None,
                  multiplier=0.01,
                  cursor='hand'
                  ):
 
         self.multiplier = multiplier
-        self.defaultValue = defaultValue
-        self.minValue = minValue
-        self.maxValue = maxValue
+        self.default_value = default_value
+        self.min_value = min_value
+        self.max_value = max_value
+        self.cursor_hud = None
         #self.cycleCheck = cmds.cycleCheck(query=True, evaluation=True)
 
         self.draggerContext = name
@@ -118,13 +153,13 @@ class Dragger(object):
         #if this doesn't work, try getmodifier
         self.modifier = cmds.draggerContext(self.draggerContext, query=True, modifier=True)
 
-        self.x = ((self.dragPoint[0] - self.anchorPoint[0]) * self.multiplier) + self.defaultValue
-        self.y = ((self.dragPoint[1] - self.anchorPoint[1]) * self.multiplier) + self.defaultValue
+        self.x = ((self.dragPoint[0] - self.anchorPoint[0]) * self.multiplier) + self.default_value
+        self.y = ((self.dragPoint[1] - self.anchorPoint[1]) * self.multiplier) + self.default_value
 
-        if self.minValue is not None and self.x < self.minValue:
-            self.x = self.minValue
-        if self.maxValue is not None and self.x > self.maxValue:
-            self.x = self.maxValue
+        if self.min_value is not None and self.x < self.min_value:
+            self.x = self.min_value
+        if self.max_value is not None and self.x > self.max_value:
+            self.x = self.max_value
 
         #dragString
         if self.modifier == 'control':
@@ -152,13 +187,22 @@ class Dragger(object):
         # close undo chunk and turn cycle check back on
         cmds.undoInfo(closeChunk=True)
         #cmds.cycleCheck(evaluation=self.cycleCheck)
+        #if self.hud:
+        #    cmds.headsUpDisplay( self.hud, rem=True )
         mel.eval('SelectTool')
 
     def drawString(self, message):
         '''
-        Creates a string message at the position of the pointer.
+        Creates a string message at the position of the pointer
+        This only works in the legacy viewport, need Viewport2.0 compatability
         '''
         cmds.draggerContext(self.draggerContext, edit=True, drawString=message)
+        #self.hud = cmds.headsUpDisplay('drag_HUD',
+        #                                section=1,
+        #                                block=0,
+        #                                label='Drag:',
+        #                                command=lambda: message,
+        #                                event='timeChanged')
 
     def dragLeft(self,*args):
         '''Placeholder for potential commands. This is meant to be overridden by a child class.'''

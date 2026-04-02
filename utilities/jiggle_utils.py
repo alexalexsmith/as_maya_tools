@@ -10,7 +10,7 @@ TODO: if baseAnimation layer is locked, need to send a warning or temporarily un
 """
 from maya import cmds
 
-from as_maya_tools.utilities import performance_utils, attribute_utils, constraint_utils, timeline_utils, maya_node_utils, decorators
+from as_maya_tools.utilities import maya_utils, attribute_utils, constraint_utils, timeline_utils, maya_node_utils, decorators
 
 JIGGLE_RIG_TAG = "JIGGLE_RIG_TAG"
 
@@ -63,7 +63,7 @@ class JiggleRig(object):
         Get an existing jiggle rig
         :param str name: name of jiggle rig
         """
-        if not performance_utils.obj_exists("{0}.{1}".format(name, JIGGLE_RIG_TAG)):
+        if not maya_utils.obj_exists("{0}.{1}".format(name, JIGGLE_RIG_TAG)):
             return
         self.main_group = maya_node_utils.MayaNode(node = name)
         self.point_constraint = maya_node_utils.MayaNode(node = cmds.listConnections(self.main_group.get_attribute("point_constraint_node"))[0])#"{0}.point_constraint_node".format(self.main_group.long_name))[0])
@@ -79,12 +79,12 @@ class JiggleRig(object):
         init the name. make sure the name is unique
         :param str name: name of jiggle rig
         """
-        if not performance_utils.obj_exists(name):
+        if not maya_utils.obj_exists(name):
             self.main_group = maya_node_utils.MayaNode(node= cmds.group(name=name, empty=True))
             # This attribute is used as a tag to declair it as a jiggle rig
             cmds.addAttr(self.main_group.long_name, keyable=False, attributeType="message", longName=JIGGLE_RIG_TAG)
             return
-        performance_utils.message("A Node named {0} already exists. Use a unique name".format(name))
+        maya_utils.message("A Node named {0} already exists. Use a unique name".format(name))
         
     def _init_transform(self, node, require_translation=True, require_rotation=True, **kwargs):
         """
@@ -93,30 +93,30 @@ class JiggleRig(object):
         :param bool require_translation: option to require tranlation attibutes to be open
         :param bool require_rotation: option to require rotation attributes to be open
         """
-        if not performance_utils.obj_exists(node):
-            performance_utils.message("{0} node doesn't exist".format(node))
+        if not maya_utils.obj_exists(node):
+            maya_utils.message("{0} node doesn't exist".format(node))
             return
             
         transform = attribute_utils.Transform(node)
         if require_translation:
             for attribute in transform.translate:
                 if attribute.is_locked():
-                    performance_utils.message("{0} Is locked so the jiggle rig cannot be connected properly".format(attribute.attribute_path))
+                    maya_utils.message("{0} Is locked so the jiggle rig cannot be connected properly".format(attribute.attribute_path))
                     return
                 if attribute.get_connections():
                     for connection in attribute.get_connections():
                         if "Constraint" in cmds.nodeType(connection):
-                            performance_utils.message("{0} has an existing constraint connection and cannot be connected to a jiggle rig".format(transform.transform_node))
+                            maya_utils.message("{0} has an existing constraint connection and cannot be connected to a jiggle rig".format(transform.transform_node))
                             return
         if require_rotation:
             for attribute in transform.rotate:
                 if attribute.is_locked():
-                    performance_utils.message("{0} Is locked so the jiggle rig cannot be connected properly".format(attribute.attribute_path))
+                    maya_utils.message("{0} Is locked so the jiggle rig cannot be connected properly".format(attribute.attribute_path))
                     return
                 if attribute.get_connections():
                     for connection in attribute.get_connections():
                         if "constraint" in cmds.nodeType(connection):
-                            performance_utils.message("{0} has an existing constraint connection and cannot be connected to a jiggle rig".format(transform.transform_node))
+                            maya_utils.message("{0} has an existing constraint connection and cannot be connected to a jiggle rig".format(transform.transform_node))
                             return
                 
         self.transform = attribute_utils.Transform(node)
@@ -343,13 +343,13 @@ def create_jiggle_rig_from_selection(**kwargs):
     """
     selection = cmds.ls(selection=True)
     if len(selection) < 1:
-        performance_utils.message("No objects selected. Select a node to apply jiggle rig to")
+        maya_utils.message("No objects selected. Select a node to apply jiggle rig to")
         
     for item in selection:
         index = 0
         name = item.replace(":", "_")
         indexed_name = "{0}_{1}".format(name, index)
-        while performance_utils.obj_exists(indexed_name):
+        while maya_utils.obj_exists(indexed_name):
             index += 1
             indexed_name = "{0}_{1}".format(name, index)    
         try:
@@ -382,7 +382,7 @@ def select_jiggle_rigs(rig_names, selection="rig"):
         return
     nodes_to_select = []
     for rig_name in rig_names:
-        if not performance_utils.obj_exists("{0}.{1}".format(rig_name, JIGGLE_RIG_TAG)):
+        if not maya_utils.obj_exists("{0}.{1}".format(rig_name, JIGGLE_RIG_TAG)):
             continue
         jiggle_rig_instance = JiggleRig()
         jiggle_rig_instance.get_jiggle_rig(rig_name)
@@ -408,7 +408,7 @@ def delete_jiggle_rigs(rig_names):
 #@decorators.base_animation_layer_unlock
 @decorators.suspend_refresh
 @decorators.undoable_chunk
-def bake_jiggle_rigs(rig_names):
+def bake_jiggle_rigs(rig_names, override_layer=False):
     """
     TODO: baking will happen on the BaseAnimation layer. this may not be desired
     Bake all jiggle rigs passed
@@ -421,7 +421,7 @@ def bake_jiggle_rigs(rig_names):
     
     # Get all the jiggle rig main groups for deletion and transforms for baking
     for rig_name in rig_names:
-        if not performance_utils.obj_exists("{0}.{1}".format(rig_name, JIGGLE_RIG_TAG)):
+        if not maya_utils.obj_exists("{0}.{1}".format(rig_name, JIGGLE_RIG_TAG)):
             print("jiggle rig doesn't exist")
             continue
         jiggle_rig_instance = JiggleRig()
@@ -433,7 +433,8 @@ def bake_jiggle_rigs(rig_names):
     cmds.bakeResults(
         transform_nodes,
         time=(animation_range[0],animation_range[1]),
-        simulation=True)
+        simulation=True,
+        bakeOnOverrideLayer=override_layer)
         
     # delete jiggle rigs
     delete_jiggle_rigs(rig_names)

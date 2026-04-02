@@ -30,7 +30,7 @@ class JiggleRigsTreeView(TreeWidgetRightClickSupportAbstract):
     Tree widget to display and manage attribute switching
     """
     
-    HEADER_LABELS = ["Active","Name"]
+    HEADER_LABELS = ["Settings","Name"]
         
     def _pop_up_menu(self):
         """
@@ -89,15 +89,49 @@ class JiggleRigsTreeViewItem(QtWidgets.QTreeWidgetItem):
         self.stiffness_slider.setRange(1,100)
         self.stiffness_slider.setProperty("Color", "Primary")
         
+        self.stiffness_spinbox = QtWidgets.QDoubleSpinBox()
+        self.stiffness_spinbox.setMinimum(0.01)
+        self.stiffness_spinbox.setMaximum(1.00)
+        self.stiffness_spinbox.setSingleStep(0.01)
+        
+        self.stiffness_slider_layout = QtWidgets.QHBoxLayout()
+        self.stiffness_slider_layout.addWidget(self.stiffness_spinbox)
+        self.stiffness_slider_layout.addWidget(self.stiffness_slider)
+        self.stiffness_group_box = QtWidgets.QGroupBox()
+        self.stiffness_group_box.setLayout(self.stiffness_slider_layout)
+        
         self.damping_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.damping_slider.setTickInterval(1)
         self.damping_slider.setRange(1,100)
         self.damping_slider.setProperty("Color", "Primary")
         
+        self.damping_spinbox = QtWidgets.QDoubleSpinBox()
+        self.damping_spinbox.setMinimum(0.01)
+        self.damping_spinbox.setMaximum(1.00)
+        self.damping_spinbox.setSingleStep(0.01)
+        
+        self.damper_slider_layout = QtWidgets.QHBoxLayout()
+        self.damper_slider_layout.addWidget(self.damping_spinbox)
+        self.damper_slider_layout.addWidget(self.damping_slider)
+        self.damper_group_box = QtWidgets.QGroupBox()
+        self.damper_group_box.setLayout(self.damper_slider_layout)
+        
         self.weight_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.weight_slider.setTickInterval(1)
         self.weight_slider.setRange(1,100)
         self.weight_slider.setProperty("Color", "Primary")
+        
+        self.weight_spinbox = QtWidgets.QDoubleSpinBox()
+        self.weight_spinbox.setMinimum(0.01)
+        self.weight_spinbox.setMaximum(1.00)
+        self.weight_spinbox.setSingleStep(0.01)
+        
+        self.weight_slider_layout = QtWidgets.QHBoxLayout()
+        self.weight_slider_layout.addWidget(self.weight_spinbox)
+        self.weight_slider_layout.addWidget(self.weight_slider)
+        self.weight_group_box = QtWidgets.QGroupBox()
+        self.weight_group_box.setLayout(self.weight_slider_layout)
+        
         # add setting items to jiggle rig item
         self.addChild(self.enable_item)
         self.addChild(self.translation_item)
@@ -106,10 +140,10 @@ class JiggleRigsTreeViewItem(QtWidgets.QTreeWidgetItem):
         self.addChild(self.damping_item)
         self.addChild(self.weight_item)
         
-        # set values to match jiggle rig settings
-        self._set_setting_widget_values()
         # set up socket connection callbacks
         self._setup_socket_connections()
+        # set values to match jiggle rig settings
+        self._set_setting_widget_values()
         
     def _setup_socket_connections(self):
         """
@@ -119,8 +153,11 @@ class JiggleRigsTreeViewItem(QtWidgets.QTreeWidgetItem):
         self.translation_checkbox.stateChanged.connect(self._callback_translation_checkbox_changed)
         self.rotation_checkbox.stateChanged.connect(self._callback_rotation_checkbox_changed)
         self.stiffness_slider.valueChanged.connect(self._callback_stiffness_slider_changed)
+        self.stiffness_spinbox.valueChanged.connect(self._callback_stiffness_spinbox_changed)
         self.damping_slider.valueChanged.connect(self._callback_damping_slider_changed)
+        self.damping_spinbox.valueChanged.connect(self._callback_damping_spinbox_changed)
         self.weight_slider.valueChanged.connect(self._callback_weight_slider_changed)
+        self.weight_spinbox.valueChanged.connect(self._callback_weight_spinbox_changed)
         
     def _set_setting_widget_values(self):
         """
@@ -163,18 +200,39 @@ class JiggleRigsTreeViewItem(QtWidgets.QTreeWidgetItem):
         callback stiffness slider changed
         """
         cmds.setAttr(f"{self.jiggle_rig_node}.stiffness", self.stiffness_slider.value()/100)
+        self.stiffness_spinbox.setValue(self.stiffness_slider.value()/100)
+        
+    def _callback_stiffness_spinbox_changed(self):
+        """
+        callback stiffness slider value change
+        """
+        self.stiffness_slider.setValue(self.stiffness_spinbox.value()*100)
         
     def _callback_damping_slider_changed(self):
         """
         callback damping slider changed
         """
         cmds.setAttr(f"{self.jiggle_rig_node}.damping", self.damping_slider.value()/100)
+        self.damping_spinbox.setValue(self.damping_slider.value()/100)
+        
+    def _callback_damping_spinbox_changed(self):
+        """
+        callback damping slider value changed
+        """
+        self.damping_slider.setValue(self.damping_spinbox.value()*100)
         
     def _callback_weight_slider_changed(self):
         """
         callback weight slider changed
         """
         cmds.setAttr(f"{self.jiggle_rig_node}.jiggleWeight", self.weight_slider.value()/100)
+        self.weight_spinbox.setValue(self.weight_slider.value()/100)
+        
+    def _callback_weight_spinbox_changed(self):
+        """
+        callback weight slider changed
+        """
+        self.weight_slider.setValue(self.weight_spinbox.value()*100)
         
 
 class JiggleRigsManagerUI(DockableMainWindowAbstract):
@@ -185,7 +243,7 @@ class JiggleRigsManagerUI(DockableMainWindowAbstract):
 
     Q_OBJECT_NAME = "jiggle_manager"
     
-    STYLE_SHEET_PATH = "{0}/theme/Flat/Dark/Cyan/Pink.qss".format(STYLE_SHEETS_PATH)
+    #STYLE_SHEET_PATH = "{0}/theme/Flat/Dark/Cyan/Pink.qss".format(STYLE_SHEETS_PATH)
     
     def __init__(self, parent=None):
         super(JiggleRigsManagerUI, self).__init__(parent)
@@ -211,6 +269,8 @@ class JiggleRigsManagerUI(DockableMainWindowAbstract):
         # Widgets
         self.create_new_jiggle_rig = QtWidgets.QPushButton("Create Jiggle Rig",self)
         self.delete_jiggle_rig = QtWidgets.QPushButton("Delete Jiggle Rig",self)
+        self.bake_to_anim_layer_checkbox = QtWidgets.QCheckBox(self)
+        self.bake_to_anim_layer_checkbox.setText("Bake to anim layer")
         self.bake_jiggle_rig = QtWidgets.QPushButton("Bake Jiggle Rig",self)
         self.playback_button = QtWidgets.QPushButton("Preview",self)
         #self.playback_button.setIcon(QtGui.QIcon(":/QtTheme/icon/triangle_right/#00bcd4.svg"))
@@ -221,6 +281,7 @@ class JiggleRigsManagerUI(DockableMainWindowAbstract):
         self.creation_deletion_management_layout.addWidget(self.create_new_jiggle_rig)
         self.creation_deletion_management_layout.addWidget(self.delete_jiggle_rig)
         # playback layout
+        self.playback_layout.addWidget(self.bake_to_anim_layer_checkbox)
         self.playback_layout.addWidget(self.bake_jiggle_rig)
         self.playback_layout.addWidget(self.playback_button)
         # treeview layout
@@ -262,9 +323,9 @@ class JiggleRigsManagerUI(DockableMainWindowAbstract):
                 self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.enable_item, 1, jiggle_rig_item_widget.enable_checkbox)
                 self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.translation_item, 1, jiggle_rig_item_widget.translation_checkbox)
                 self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.rotation_item, 1, jiggle_rig_item_widget.rotation_checkbox)
-                self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.stiffness_item, 1, jiggle_rig_item_widget.stiffness_slider)
-                self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.damping_item, 1, jiggle_rig_item_widget.damping_slider)
-                self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.weight_item, 1, jiggle_rig_item_widget.weight_slider)
+                self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.stiffness_item, 1, jiggle_rig_item_widget.stiffness_group_box)
+                self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.damping_item, 1, jiggle_rig_item_widget.damper_group_box)
+                self.jiggle_rigs_treeview.setItemWidget(jiggle_rig_item_widget.weight_item, 1, jiggle_rig_item_widget.weight_group_box)
                 self.jiggle_rigs_treeview.addTopLevelItem(jiggle_rig_item_widget)
         self.jiggle_rigs_treeview.expandAll()
         return
@@ -305,7 +366,7 @@ class JiggleRigsManagerUI(DockableMainWindowAbstract):
         Bake jiggle rigs
         """
         selected_jiggle_rigs = self._get_selected_jiggle_rigs_from_tree_view()
-        jiggle_utils.bake_jiggle_rigs(selected_jiggle_rigs)
+        jiggle_utils.bake_jiggle_rigs(selected_jiggle_rigs, override_layer=self.bake_to_anim_layer_checkbox.isChecked())
         self._refresh_jiggle_rig_treeview()
         return
         

@@ -5,7 +5,7 @@ from functools import wraps
 
 from maya import cmds, mel
 
-from as_maya_tools.utilities import performance_utils
+from as_maya_tools.utilities import maya_utils
 
 
 def set_pref_anim_blend_with_existing_connections(func):
@@ -91,7 +91,7 @@ def maintain_selection(func):
             if len(selection) == 0:
                 return
             for item in selection:
-                if not performance_utils.obj_exists(item):
+                if not maya_utils.obj_exists(item):
                     return
             cmds.select(selection, replace=True)
                 

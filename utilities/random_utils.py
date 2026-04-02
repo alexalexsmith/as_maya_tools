@@ -5,7 +5,7 @@ import random
 
 from maya import cmds
 
-from as_maya_tools.utilities import performance_utils, attribute_utils, decorators
+from as_maya_tools.utilities import maya_utils, attribute_utils, decorators
 
 
 @decorators.undoable_chunk
@@ -24,7 +24,7 @@ def generate_noise_on_attributes(nodes, attributes, keyframes, amplitude=1, freq
             
         transform_object = attribute_utils.Transform(node)
         for attribute in attributes:
-            if not performance_utils.obj_exists("{0}.{1}".format(node, attribute)):
+            if not maya_utils.obj_exists("{0}.{1}".format(node, attribute)):
                 continue
                 
             # Add random value(within amplidude range) keyframes to selected attributes

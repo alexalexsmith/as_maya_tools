@@ -389,3 +389,35 @@ class InformationDialog(QtWidgets.QDialog):
         """
         super(InformationDialog, self).closeEvent(event)
         self.deleteLater()
+
+
+class CursorLabel(QtWidgets.QLabel):
+    """
+    Label that follows the cursor 
+    """
+    def __init__(self, parent=get_maya_main_widget()):
+        super(CursorLabel, self).__init__(parent)
+
+        self.setText("Hello 👀")
+        self.setStyleSheet("""
+            QLabel {
+                background-color: rgba(0, 0, 0, 180);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+        """)
+        self.adjustSize()
+
+        # Make it float above everything
+        self.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint)
+        self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
+
+        # Timer to follow cursor
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.follow_mouse)
+        self.timer.start(16)  # ~60 FPS
+
+    def follow_mouse(self):
+        pos = QtGui.QCursor.pos()
+        self.move(pos.x() + 15, pos.y() + 15)  # offset from cursor

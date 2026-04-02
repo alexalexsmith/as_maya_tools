@@ -3,7 +3,7 @@ Utilities for managing maya nodes
 """
 from maya import cmds
 
-from as_maya_tools.utilities import performance_utils
+from as_maya_tools.utilities import maya_utils
 
 
 class MayaNode(object):
@@ -54,7 +54,7 @@ class MayaNode(object):
     def delete_node(self):
         """delete the node if it exists"""
         if self.long_name:
-            if performance_utils.obj_exists(self.long_name):
+            if maya_utils.obj_exists(self.long_name):
                 cmds.delete(self.long_name)
 
     def get_attribute(self, attribute, shape=False):
@@ -98,3 +98,18 @@ class MayaNode(object):
             return self
         self.long_name = cmds.ls(self.short_name, long=True)[0]
         return self
+        
+        
+def get_namespace_from_selection():
+    """
+    return the namespace of the first selected node. If no namespace is found or nothing is selected returns None
+    """
+    selected_nodes = cmds.ls(selection=True)
+    if not selected_nodes:
+        return None
+        
+    if not ":" in selected_nodes[0]:
+        return None
+        
+    namespace = selected_nodes[0].rsplit(":", 1)[0]
+    return namespace

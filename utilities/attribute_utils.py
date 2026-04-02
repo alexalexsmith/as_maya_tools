@@ -30,7 +30,7 @@ class Transform(object):
         self.rotate = [self.rotate_x, self.rotate_y, self.rotate_z]
         self.scale = [self.scale_x, self.scale_y, self.scale_z]
         
-    def get_translation(self, world_space=False):
+    def get_translation(self, world_space=False, time=None):
         """
         Get the current translation as a Tuple (x,y,z)
         """
@@ -38,7 +38,7 @@ class Transform(object):
             return cmds.xform(self.transform_node, query=True, translation=True, ws=True)
         return (self.translate_x.get_value(), self.translate_y.get_value(),self.translate_z.get_value())
         
-    def get_rotation(self, world_space=False):
+    def get_rotation(self, world_space=False, time=None):
         """
         Get the curent rotation value as a Tuple (x,y,z)
         """
@@ -46,7 +46,7 @@ class Transform(object):
             return cmds.xform(self.transform_node, query=True, rotation=True, ws=True)
         return (self.rotate_x.get_value(), self.rotate_y.get_value(),self.rotate_z.get_value())
         
-    def get_scale(self, world_space=False):
+    def get_scale(self, world_space=False, time=None):
         """
         Get the curent scale value as a Tuple (x,y,z)
         """
@@ -115,9 +115,11 @@ class Attribute(object):
         else:
             return 0  #NOTE: default value for translation and rotation attributes
         
-    def get_value(self):
+    def get_value(self, world_space=False, time=None):
         """
         get the current value
+        :param bool world_space: option to get world value
+        :param float time: option to get the value a specified time
         """
         return cmds.getAttr(self.attribute_path)
         

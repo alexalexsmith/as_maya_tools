@@ -2,7 +2,7 @@
 snapping scripts
 """
 from maya import cmds
-from as_maya_tools.utilities import xform_utils
+from as_maya_tools.utilities import xform_utils, json_utils
 
 
 def snap_a_to_b(translation=True, rotation=True, scale=False, **kwargs):
