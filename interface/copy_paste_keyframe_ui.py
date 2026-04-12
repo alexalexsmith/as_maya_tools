@@ -199,7 +199,7 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         :return:
         """
         timeline.copy_keyframes()
-        maya_utils.message(message="Copied Keyframes", record_warning=False)
+        maya_utils.message(msg="Copied Keyframes", record_warning=False)
 
     def _callback_paste_keyframe_action(self):
         """
@@ -207,7 +207,7 @@ class CopyPasteKeyframesUI(DockableMainWindowAbstract):
         :return:
         """
         timeline.paste_keyframes()
-        maya_utils.message(message="Pasted Keyframes", record_warning=False)
+        maya_utils.message(msg="Pasted Keyframes", record_warning=False)
 
     def _callback_searchline_use_selected_namespace(self):
         """

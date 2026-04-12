@@ -8,24 +8,26 @@ from as_maya_tools.utilities import maya_utils, keyframe_utils, math_utils, drag
 
 
 class TweenDragger(dragger_utils.Dragger):
+    """
+    Drag context tool to lerp attribute value between previous and next keyframe value
+    """
+    NAME = "Tween Dragger"
+    TITLE = "Tween Dragger"
+    CURSOR = "hand"
+    DEFAULT_VALUE = 0.5
 
-    def __init__(self,
-                 name='tweendragger',
-                 title='TweenDragger',
-                 default_value=0.5,
-                 min_value=None,
-                 max_value=None,
-                 multiplier=0.01,
-                 cursor='hand'):
-        dragger_utils.Dragger.__init__(self, default_value=default_value, min_value=min_value, max_value=max_value,
-                                       name=name, title=title)
+    def __init__(self, *args, **kwargs):
+        super(TweenDragger, self).__init__(*args, **kwargs)
 
+    def _init_subclass(self):
+        """
+        init the dragger tool data
+        """
         nodes = cmds.ls(selection=True)
 
         if nodes is None or len(nodes) == 0:
-            maya_utils.message("no nodes specified to copy keyframes", position='midCenterTop', record_warning=True)
-            self.release()
-            return
+            maya_utils.message("0 nodes selected", position='midCenterTop', record_warning=False)
+            raise ValueError("0 transform nodes selected")
 
         self.current_time = cmds.currentTime(query=True)
         self.curves = {}
@@ -44,37 +46,62 @@ class TweenDragger(dragger_utils.Dragger):
                 if not next_keyframe:
                     continue
                 # set keyframe to be manipulated
-                cmds.setKeyframe(f"{node}.{attribute}", time=(self.current_time,))
+                #cmds.setKeyframe(f"{node}.{attribute}", time=(self.current_time,))
                 previous_keyframe_data = keyframe_utils.get_keyframe_data(node, attribute, previous_keyframe)
                 next_keyframe_data = keyframe_utils.get_keyframe_data(node, attribute, next_keyframe)
                 data = {"previous_keyframe_data": previous_keyframe_data, "next_keyframe_data": next_keyframe_data}
                 self.curves[f"{node}.{attribute}"] = data
-        self.set_curser_label("dragtween")
-        self.set_tool()
 
-    def drag_left(self):
+    def press(self):
+        """
+        Actions taking place on press action
+        """
+        # set keyframe will set a keyframe on all attributes. we may want to decide on selected attributes later
+        cmds.setKeyframe()
+
+    def pre_drag(self):
+        """
+        pre_drag function adjustments
+        """
+        if self.modifier == "ctrl":
+            self.min_value = 0.0
+            self.max_value = 1.0
+        if not self.modifier == "ctrl":
+            self.min_value = None
+            self.max_value = None
+        if self.modifier == "other":
+            self.multiplier = 0.001
+        if not self.modifier == "other":
+            self.multiplier = 0.01
+
+    def drag(self):
         """
         Activated by the left mouse button, this scales keys toward or away from their default value.
         """
-        self.set_curser_label(str(self.x))
         for curve in self.curves:
             cmds.keyframe(
                 curve,
                 time=(self.current_time,),
-                valueChange=self.curves[curve]["previous_keyframe_data"]["value"] + ((self.curves[curve][
-                                                                                          "next_keyframe_data"][
-                                                                                          "value"] - self.curves[curve][
-                                                                                          "previous_keyframe_data"][
-                                                                                          "value"]) * self.x))
+                valueChange=math_utils.lerp(
+                    self.curves[curve]["previous_keyframe_data"]["value"],
+                    self.curves[curve]["next_keyframe_data"]["value"],
+                    self.x)
+            )
 
 
 class WSTweenDragger(dragger_utils.Dragger):
+    """
+    World space tween dragger tool
+    """
+    NAME = "WorldSpace Tween Dragger"
+    TITLE = "WorldSpace Tween Dragger"
+    CURSOR = "hand"
+    DEFAULT_VALUE = 0.5
 
-    def __init__(self, name='wstweendragger', title='WorldSpaceTweenDragger', default_value=0.5, min_value=None,
-                 max_value=None, multiplier=0.01, cursor='hand'):
-        dragger_utils.Dragger.__init__(self, default_value=default_value, min_value=min_value, max_value=max_value,
-                                       name=name, title=title)
-
+    def _init_subclass(self):
+        """
+        init the dragger tool data
+        """
         nodes = cmds.ls(selection=True)
 
         if nodes is None or len(nodes) == 0:
@@ -106,16 +133,28 @@ class WSTweenDragger(dragger_utils.Dragger):
 
             data = {"pre_frame_matrix": pre_frame_matrix, "next_frame_matrix": next_frame_matrix}
             self.curves[node] = data
-        self.set_curser_label("left click and drag to tween motion")
-        self.set_tool()
 
-    def drag_left(self):
+    def pre_drag(self):
+        """
+        pre_drag function adjustments
+        """
+        if self.modifier == "ctrl":
+            self.min_value = 0.0
+            self.max_value = 1.0
+        if not self.modifier == "ctrl":
+            self.min_value = None
+            self.max_value = None
+        if self.modifier == "other":
+            self.multiplier = 0.001
+        if not self.modifier == "other":
+            self.multiplier = 0.01
+
+    def drag(self):
         """
         Activated by the left mouse button, this scales keys toward or away from their default value.
         """
-        self.set_curser_label(str(self.x))
         for curve in self.curves:
-            # get lerp values
+            # get lerp_vector values
             lerped_matrix = math_utils.lerp_matrix(self.curves[curve]["pre_frame_matrix"],
                                                    self.curves[curve]["next_frame_matrix"], self.x)
             cmds.xform(matrix=lerped_matrix, ws=True)
@@ -181,6 +220,6 @@ class CameraDepthDragger(dragger_utils.Dragger):
 
     def drag_left(self):
         """
-        drag normal speed
+        pre_drag normal speed
         """
         self.drag_mult(4)

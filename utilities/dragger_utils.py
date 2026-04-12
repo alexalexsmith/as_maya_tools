@@ -4,135 +4,146 @@ Dragger utilities for creating viewport dragging tools
 import maya.api.OpenMaya as OpenMaya
 from maya import cmds, mel
 
-from as_maya_tools.utilities import qt_utils
+from as_maya_tools.utilities import qt_utils, maya_utils
 
 
 class Dragger(object):
     """
-    Dragger tool abstract. Used to run functions using the mouse drag to adjust values
+    Dragger tool abstract. Used to run functions using the mouse pre_drag to adjust values
     """
+    NAME = None
+    TITLE = None
+    CURSOR = None
+    DEFAULT_VALUE = None
 
     def __init__(self,
-                 name='dragger_context_tool',
-                 title='Dragger',
-                 default_value=0,
                  min_value=None,
                  max_value=None,
                  multiplier=0.01,
-                 cursor='hand'
+                 *args,
+                 **kwargs
                  ):
 
+        self.y = None
+        self.x = None
+        self.modifier = None  # NOTE: only 3 options "shift", "ctrl", "other". other is the alt key
+        self.drag_point = None
         self.multiplier = multiplier
-        self.default_value = default_value
         self.min_value = min_value
         self.max_value = max_value
-        self.cursor_label = qt_utils.CursorLabel()
-        self.cursor_label.show()
+        self.cursor_label = self.__init_cursor_label(self.TITLE)
 
-        self.draggerContext = name
-        if not cmds.draggerContext(self.draggerContext, exists=True):
-            self.draggerContext = cmds.draggerContext(self.draggerContext)
+        self.dragger_context = self.NAME
+        if not cmds.draggerContext(self.dragger_context, exists=True):
+            self.dragger_context = cmds.draggerContext(self.dragger_context)
 
-        cmds.draggerContext(self.draggerContext, edit=True,
-                            pressCommand=self.press,
-                            dragCommand=self.drag,
-                            releaseCommand=self.release,
-                            cursor=cursor,
-                            drawString=title,
+        cmds.draggerContext(self.dragger_context, edit=True,
+                            pressCommand=self.__press,
+                            dragCommand=self.__drag,
+                            releaseCommand=self.__release,
+                            cursor=self.CURSOR,
+                            drawString=self.TITLE,
                             undoMode='all'
                             )
+        try:
+            self._init_subclass(*args, **kwargs)
+            self.set_tool()
+        except Exception:
+            self.__release(*args, **kwargs)
 
-    def press(self, *args):
-        '''
-        Be careful overwriting the press method in child classes, because of the undoInfo openChunk
-        '''
+    def _init_subclass(self, *args, **kwargs):
+        """
+        _init_subclass function for all subclasses. Raise an error when checking for failures
+        """
+        return
 
-        self.anchor_point = cmds.draggerContext(self.draggerContext, query=True, anchorPoint=True)
-        self.button = cmds.draggerContext(self.draggerContext, query=True, button=True)
+    @staticmethod
+    def __init_cursor_label(label):
+        """
+        Initialize the cursor label
+        :param label: string label to display
+        :return: qt_utils.CursorLabel()
+        """
+        cursor_label = qt_utils.CursorLabel()
+        cursor_label.setText(label)
+        cursor_label.show()
+        return cursor_label
 
-        # This turns off the undo queue until we're done dragging, so we can undo it.
+    def __press(self, *args, **kwargs):
+        """
+        private press function. Undo chunk is opened here
+        :return: None
+        """
+        self.anchor_point = cmds.draggerContext(self.dragger_context, query=True, anchorPoint=True)
+        self.button = cmds.draggerContext(self.dragger_context, query=True, button=True)
         cmds.undoInfo(openChunk=True)
+        self.press(*args, **kwargs)
 
-    def drag(self, *args):
-        '''
-        This is what is actually run during the drag, updating the coordinates and calling the
-        placeholder drag functions depending on which button is pressed.
-        '''
-        # show curser label when drag is activated
+    def press(self, *args, **kwargs):
+        """
+        Press function to be overwritten by subclass
+        """
+        return
 
-        self.dragPoint = cmds.draggerContext(self.draggerContext, query=True, dragPoint=True)
+    def __drag(self, *args, **kwargs):
+        """
+        private pre_drag function
+        :return: None
+        """
 
-        # if this doesn't work, try getmodifier
-        self.modifier = cmds.draggerContext(self.draggerContext, query=True, modifier=True)
+        self.drag_point = cmds.draggerContext(self.dragger_context, query=True, dragPoint=True)
+        self.modifier = cmds.draggerContext(self.dragger_context, query=True, modifier=True)
 
-        self.x = ((self.dragPoint[0] - self.anchor_point[0]) * self.multiplier) + self.default_value
-        self.y = ((self.dragPoint[1] - self.anchor_point[1]) * self.multiplier) + self.default_value
+        self.pre_drag(*args, **kwargs)
+
+        self.x = ((self.drag_point[0] - self.anchor_point[0]) * self.multiplier) + self.DEFAULT_VALUE
+        self.y = ((self.drag_point[1] - self.anchor_point[1]) * self.multiplier) + self.DEFAULT_VALUE
 
         if self.min_value is not None and self.x < self.min_value:
             self.x = self.min_value
         if self.max_value is not None and self.x > self.max_value:
             self.x = self.max_value
 
-        # dragString
-        if self.modifier == 'control':
-            if self.button == 1:
-                self.drag_control_left(*args)
-            elif self.button == 2:
-                self.drag_control_middle(*args)
-        elif self.modifier == 'shift':
-            if self.button == 1:
-                self.drag_shift_left(*args)
-            elif self.button == 2:
-                self.drag_shift_middle(*args)
-        else:
-            if self.button == 1:
-                self.drag_left()
-            elif self.button == 2:
-                self.drag_middle()
+        self.drag(*args, **kwargs)
 
+        self.set_cursor_label_drag_display(*args, **kwargs)
         cmds.refresh()
 
-    def release(self, *args):
-        '''
-        Be careful overwriting the release method in child classes. Not closing the undo chunk leaves maya in a sorry state.
-        '''
-        # close undo chunk and turn cycle check back on
+    def pre_drag(self, *args, **kwargs):
+        """
+        Pre Drag function to be overwritten by subclass
+        """
+        return
+
+    def drag(self, *args, **kwargs):
+        """
+        Drag function to be overwritten by subclass
+        """
+
+    def set_cursor_label_drag_display(self, *args, **kwargs):
+        """
+        defines what is displayed on the cursor label and how it looks when dragging
+        """
+        self.cursor_label.setText(str(int(self.x * 100)))
+        if int(self.x * 100) > 100 or int(self.x * 100) < 0:
+            self.cursor_label.set_color("red")
+        else:
+            self.cursor_label.set_color("white")
+
+    def __release(self, *args, **kwargs):
+        """
+        private release function
+        """
+        self.release()
         cmds.undoInfo(closeChunk=True)
         self.cursor_label.close()
         mel.eval('SelectTool')
 
-    def set_curser_label(self, message):
-        '''
-        Creates a string message at the position of the pointer
-        '''
-        self.cursor_label.setText(message)
-
-    def drag_left(self, *args):
-        '''Placeholder for potential commands. This is meant to be overridden by a child class.'''
-        pass
-
-    def drag_middle(self, *args):
-        '''Placeholder for potential commands. This is meant to be overridden by a child class.'''
-        pass
-
-    def drag_control_left(self, *args):
-        '''Placeholder for potential commands. This is meant to be overridden by a child class.'''
-        pass
-
-    def drag_control_middle(self, *args):
-        '''Placeholder for potential commands. This is meant to be overridden by a child class.'''
-        pass
-
-    def drag_shift_left(self, *args):
-        '''Placeholder for potential commands. This is meant to be overridden by a child class.'''
-        pass
-
-    def drag_shift_middle(self, *args):
-        '''Placeholder for potential commands. This is meant to be overridden by a child class.'''
-        pass
-
-    # no drag right, because that is monopolized by the right click menu
-    # no alt drag, because that is used for the camera
+    def release(self, *args, **kwargs):
+        """
+        release function to be overwritten by subclass
+        """
+        return
 
     def set_tool(self):
-        cmds.setToolTo(self.draggerContext)
+        cmds.setToolTo(self.dragger_context)

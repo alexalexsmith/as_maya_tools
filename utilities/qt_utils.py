@@ -30,7 +30,7 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
     WINDOW_NAME = None
 
     Q_OBJECT_NAME = None
-    
+
     STYLE_SHEET_PATH = None
 
     def __init__(self, parent=None, *args, **kwargs):
@@ -41,15 +41,15 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         self.setObjectName(self.Q_OBJECT_NAME)
 
         self._init_ui(*args, **kwargs)
-        
+
         self._setup_socket_connections()
         self._set_style_sheet(self.STYLE_SHEET_PATH)
-        
+
     def _set_style_sheet(self):
         """set the style sheet"""
         if self.STYLE_SHEET_PATH is None:
             return
-            
+
         file = QtCore.QFile(self.STYLE_SHEET_PATH)
         file.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text)
         stream = QtCore.QTextStream(file)
@@ -95,12 +95,12 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         """
         Init status Bar widget
         """
-        #NOTE: Setup the status Bar with options
+        # NOTE: Setup the status Bar with options
         self._status_bar = QtWidgets.QStatusBar()
         self._status_bar.showMessage("Status bar ready.")
         self.setStatusBar(self._status_bar)
 
-        #NOTE: Sets status bar object Name to "statusBar" and changes the color
+        # NOTE: Sets status bar object Name to "statusBar" and changes the color
         self._status_bar.setObjectName("statusBar")
         self.setStyleSheet("#statusBar {background-color:#faa300;color:#fff}")
 
@@ -195,7 +195,6 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         load the ui. close any existing instance of the window
         :return QMainWindow: returns window instance
         """
-        # UI workspace Control needs to be deleted to create a new instance
         work_space_control = "{0}WorkspaceControl".format(cls.Q_OBJECT_NAME)
         if cmds.workspaceControl(work_space_control, q=True, exists=True):
             cmds.workspaceControl(work_space_control, e=True, close=True)
@@ -211,8 +210,8 @@ class DockableMainWindowAbstract(MayaQWidgetDockableMixin, QtWidgets.QMainWindow
         ui.show(dockable=dockable)
         ui.raise_()
         return ui
-        
-        
+
+
 class TreeWidgetRightClickSupportAbstract(QtWidgets.QTreeWidget):
     """
     Custom Tree Widget With default right click menu support
@@ -322,8 +321,8 @@ class ConfirmDialog(QtWidgets.QDialog):
         close the dialog
         """
         self.reject()
-       
-        
+
+
 class InformationDialog(QtWidgets.QDialog):
     """
     Confirm dialog to give user a chance to avoid errors
@@ -395,18 +394,20 @@ class CursorLabel(QtWidgets.QLabel):
     """
     Label that follows the cursor 
     """
+
+    STYLE_SHEET = """
+                QLabel {{
+                    background-color: rgba(0, 0, 0, 180);
+                    color: {color_val};
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                }}
+                """
+
     def __init__(self, parent=get_maya_main_widget()):
         super(CursorLabel, self).__init__(parent)
 
-        self.setText("Hello 👀")
-        self.setStyleSheet("""
-            QLabel {
-                background-color: rgba(0, 0, 0, 180);
-                color: white;
-                padding: 4px 8px;
-                border-radius: 4px;
-            }
-        """)
+        self.setStyleSheet(self.STYLE_SHEET.format(color_val="white"))
         self.adjustSize()
 
         # Make it float above everything
@@ -418,6 +419,18 @@ class CursorLabel(QtWidgets.QLabel):
         self.timer.timeout.connect(self.follow_mouse)
         self.timer.start(16)  # ~60 FPS
 
+    def setText(self, text):
+        super().setText(text)
+        self.adjustSize()  # Resize immediately
+        self.updateGeometry()
+
     def follow_mouse(self):
         pos = QtGui.QCursor.pos()
         self.move(pos.x() + 15, pos.y() + 15)  # offset from cursor
+
+    def set_color(self, color):
+        """
+        set the color of the text
+        :param color: qss color
+        """
+        self.setStyleSheet(self.STYLE_SHEET.format(color_val=color))
