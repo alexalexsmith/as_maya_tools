@@ -113,8 +113,6 @@ def get_parent_connected_constraints(node):
     return connected_constraints
 
 
-
-
 def get_locked_transforms(item):
     """get locked transforms of passed item
     :param str item: name of object to check
@@ -144,9 +142,11 @@ def _handle_skip_attributes_per_child(child, skip_translate=[], skip_rotate=[], 
                 skip_attribute.append(axis)
     return skip_translate_arg, skip_rotate_arg, skip_scale_arg
 
+
 # Constraint Functions
 @set_pref_anim_blend_with_existing_connections
 def create_parent_constraint(parent=None, child=None, maintain_offset=True, skip_translate=[], skip_rotate=[], **kwargs):
+    """
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
@@ -167,6 +167,7 @@ def create_parent_constraint(parent=None, child=None, maintain_offset=True, skip
 
 @set_pref_anim_blend_with_existing_connections
 def create_point_constraint(parent=None, child=None, maintain_offset=True, skip_translate=[], **kwargs):
+    """
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
@@ -182,6 +183,7 @@ def create_point_constraint(parent=None, child=None, maintain_offset=True, skip_
 
 @set_pref_anim_blend_with_existing_connections
 def create_orient_constraint(parent=None, child=None, maintain_offset=True, skip_rotate=[], **kwargs):
+    """
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
@@ -197,6 +199,7 @@ def create_orient_constraint(parent=None, child=None, maintain_offset=True, skip
 
 @set_pref_anim_blend_with_existing_connections
 def create_scale_constraint(parent=None, child=None, maintain_offset=True, skip_scale=[], **kwargs):
+    """
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
@@ -212,6 +215,7 @@ def create_scale_constraint(parent=None, child=None, maintain_offset=True, skip_
 
 @set_pref_anim_blend_with_existing_connections
 def create_aim_constraint(parent=None, child=None, maintain_offset=True, skip_rotate=[], **kwargs):
+    """
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
