@@ -175,7 +175,6 @@ class SelectionSetManagerUI(DockableMainWindowAbstract):
         self.no_selectionset_folder_information_dialog = InformationDialog(
             self,
             window_title="Warning",
-            message="No selection set created\nYou need to create a folder to store your selection sets first")
         self.selection_sets_in_folder_information_dialog = InformationDialog(
             self,
             window_title="Warning",
@@ -591,7 +590,6 @@ class SelectionSetCreate(QtWidgets.QDialog):
 
     def _callback_create_selection_set(self):
         """
-        create selection set in the selection set sub folder
         """
         file_name = self._name_line_edit.text()
         sub_folder = self._parent.set_folder_combobox.currentText()

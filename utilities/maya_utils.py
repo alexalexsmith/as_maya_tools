@@ -2,6 +2,8 @@
 Functions that replace maya functions for speed
 Common maya functions to reduce redundancies or forcing everything to be included in an object
 """
+import inspect
+import sys
 
 import maya.api.OpenMaya as OpenMaya
 from maya import cmds, mel
@@ -19,8 +21,23 @@ def obj_exists(name):
         return True
     except RuntimeError:
         return False
-        
-        
+
+
+def record_error(function, error):
+    """
+    records a clean error message in the maya terminal with details for troubleshooting
+    :param function: function that caused issue
+    :param error: error message
+    """
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    module = inspect.getmodule(function)
+    file_name = inspect.getframeinfo(exc_tb.tb_next).filename
+    line = exc_tb.tb_next.tb_lineno
+    error_message = f"module '{module.__name__}' {error}\nTraceback:\n{file_name}, line {line} in {function.__name__}"
+    OpenMaya.MGlobal.displayError(error_message)
+    return
+
+
 def message(msg, position='midCenterTop', record_warning=True):
     """
     A nicer way to display messages to the user
@@ -45,18 +62,18 @@ def message(msg, position='midCenterTop', record_warning=True):
         OpenMaya.MGlobal.displayInfo(msg)
     fade_time = min(len(msg) * 100, 2000)
     cmds.inViewMessage(amg=msg, pos=position, fade=True, fadeStayTime=fade_time, dragKill=True)
-        
-        
+
+
 def get_current_camera():
-    '''
+    """
     Returns the camera that you're currently looking through.
     If the current highlighted panel isn't a modelPanel,
-    '''
+    """
 
     panel = cmds.getPanel(withFocus=True)
 
     if cmds.getPanel(typeOf=panel) != 'modelPanel':
-        #just get the first visible model panel we find, hopefully the correct one.
+        # just get the first visible model panel we find, hopefully the correct one.
         for p in cmds.getPanel(visiblePanels=True):
             if cmds.getPanel(typeOf=p) == 'modelPanel':
                 panel = p
@@ -67,17 +84,17 @@ def get_current_camera():
         OpenMaya.MGlobal.displayWarning('Please highlight a camera viewport.')
         return False
 
-    camShape = cmds.modelEditor(panel, query=True, camera=True)
-    if not camShape:
+    cam_shape = cmds.modelEditor(panel, query=True, camera=True)
+    if not cam_shape:
         return False
 
-    camNodeType = cmds.nodeType(camShape)
-    if cmds.nodeType(camShape) == 'transform':
-        return camShape
-    elif cmds.nodeType(camShape) in ['camera','stereoRigCamera']:
-        return cmds.listRelatives(camShape, parent=True, path=True)[0]   
-        
-        
+    cam_node_type = cmds.nodeType(cam_shape)
+    if cmds.nodeType(cam_shape) == 'transform':
+        return cam_shape
+    elif cmds.nodeType(cam_shape) in ['camera', 'stereoRigCamera']:
+        return cmds.listRelatives(cam_shape, parent=True, path=True)[0]
+
+
 def progress_bar(status_string, max_value):
     """maya's main progress bar at lower left hand corner
     :param str status_string: status string when beginProgress is True
@@ -90,7 +107,5 @@ def progress_bar(status_string, max_value):
                      beginProgress=True,
                      isInterruptable=True,
                      status=status_string,
-                     max_value=max_value)
+                     maxValue=max_value)
     return gMainProgressBar
-    
-

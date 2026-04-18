@@ -79,10 +79,8 @@ from as_maya_tools.animation import attributes;attributes.reset_selected_attribu
 ```
 
 ## Motion trails
-### create motion trail
 Create a motion trail for selected objects. Motion trail will be made visible even if isolate is on in viewport
 ```
-from as_maya_tools.animation import motion_trails;motion_trails.create()
 ```
 
 ### toggle motion trail visibility
@@ -104,7 +102,6 @@ from as_maya_tools.animation import motion_trails;motion_trails.delete()
 ```
 
 ## Misc Scripts
-### create locator at selected
 Create locator(s) on selected object(s)
 ```
 from as_maya_tools.animation import quick_scripts;quick_scripts.create_locator_at_selected()
@@ -162,14 +159,12 @@ Select set of controls the current selection belongs to. Requires rig context de
 from as_maya_tools.animation import rig_selection;rig_selection.select_set()
 ```
 
-### create temp selection set
 Create an overwritable selection set
 ```
 from as_maya_tools.animation import rig_selection;rig_selection.create_temp_selection_set()
 ```
 
 ### select temp selection set
-Select the items in a selection set created using the create temp selection set command. Selection is namespace agnostic. 
 The tool will use any and all namespaces in the current selection. If nothing is selected, the stored namespace will be used.
 nodes in the selection set without a namespace will be added either way
 ```

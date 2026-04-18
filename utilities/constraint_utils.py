@@ -147,7 +147,6 @@ def _handle_skip_attributes_per_child(child, skip_translate=[], skip_rotate=[], 
 # Constraint Functions
 @set_pref_anim_blend_with_existing_connections
 def create_parent_constraint(parent=None, child=None, maintain_offset=True, skip_translate=[], skip_rotate=[], **kwargs):
-    """create parent constraint
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
@@ -168,7 +167,6 @@ def create_parent_constraint(parent=None, child=None, maintain_offset=True, skip
 
 @set_pref_anim_blend_with_existing_connections
 def create_point_constraint(parent=None, child=None, maintain_offset=True, skip_translate=[], **kwargs):
-    """create point constraint
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
@@ -184,7 +182,6 @@ def create_point_constraint(parent=None, child=None, maintain_offset=True, skip_
 
 @set_pref_anim_blend_with_existing_connections
 def create_orient_constraint(parent=None, child=None, maintain_offset=True, skip_rotate=[], **kwargs):
-    """create orient constraint
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
@@ -200,7 +197,6 @@ def create_orient_constraint(parent=None, child=None, maintain_offset=True, skip
 
 @set_pref_anim_blend_with_existing_connections
 def create_scale_constraint(parent=None, child=None, maintain_offset=True, skip_scale=[], **kwargs):
-    """create scale constraint
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset
@@ -216,7 +212,6 @@ def create_scale_constraint(parent=None, child=None, maintain_offset=True, skip_
 
 @set_pref_anim_blend_with_existing_connections
 def create_aim_constraint(parent=None, child=None, maintain_offset=True, skip_rotate=[], **kwargs):
-    """create scale constraint
     :param str parent: parent of constraint
     :param str child: child of constraint
     :param bool maintain_offset: maintain current offset

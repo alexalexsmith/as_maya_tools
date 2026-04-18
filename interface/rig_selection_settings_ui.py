@@ -40,8 +40,7 @@ class RigSelectionSettingsUI(DockableMainWindowAbstract):
     WINDOW_NAME = "Rig Selection Settings"
 
     Q_OBJECT_NAME = "rig_selection_settings"
-    
-    #STYLE_SHEET_PATH = "{0}/mortarheadd.qss".format(STYLE_SHEETS_PATH)
+
     
     def __init__(self, parent=None):
         super(RigSelectionSettingsUI, self).__init__(parent)

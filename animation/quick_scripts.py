@@ -146,7 +146,6 @@ def attach_locator_to_selection():
     
 def create_mmv_offset_controls():
     """
-    create a simple offset control rig. if objects are selected,they will be constrained to the end of the control rig
     """
     selection = cmds.ls(selection=True)
     ctrl_normal_direction = (0, 1, 0)

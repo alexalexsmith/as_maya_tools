@@ -210,7 +210,6 @@ def get_set_controls(ignore_side=False, subset_filter=False, **kwargs):
             rig_control = get_rig_control_object(rig_context, control, **kwargs)
             if rig_control:
                 all_controls.append(rig_control)
-    # create a list of controls belonging to the same set as the initial selection
     set_controls = []
     for rig_control in rig_controls:
         if not rig_control.set:

@@ -135,7 +135,6 @@ class SelectionSetFile(object):
         
     def create_file(self):
         """
-        create the selection set file
         """
         directory = os.path.join(directory, sub_folder)
         json_utils.write_json_file(directory, file_name, data)
@@ -150,13 +149,11 @@ class SelectionSetFile(object):
     def create_selection_set(self, selection_set):
         """
         Create a selection set
-        :param str selection_set: name of selection set to create
         """
         
     def delete_selection_set(self, selection_set):
         """
         Create a selection set
-        :param str selection_set: name of selection set to create
         """
         
     def add_selected_nodes_to_selection_set(self, selection_set):

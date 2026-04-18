@@ -26,7 +26,6 @@ def snap_a_to_b(a, b, translation=True, rotation=True, scale=False, **kwargs):
     if scale:
         b_scale_pos = cmds.xform(b, query=True, scale=True, ws=True)
         cmds.xform(a, scale=list(b_scale_pos), ws=True)
-        
 
 
 def snap_to_first(
@@ -84,7 +83,7 @@ def snap_to_first(
             node_rotation_vector = cmds.xform(node, query=True, rotation=True, ws=True)
             rotation_vector[2] = node_rotation_vector[2]
             
-        # Scale Vactor snap
+        # Scale Vector snap
         if not scale_x:
             node_scale_vector = cmds.xform(node, query=True, scale=True, ws=True)
             scale_vector[0] = node_scale_vector[0]
@@ -97,12 +96,12 @@ def snap_to_first(
         
         # Snap Translation
         if translate_x or translate_y or translate_z:
-            cmds.xform(a, translation=list(translation_vector), ws=True)
+            cmds.xform(node, translation=list(translation_vector), ws=True)
             
         # Snap Rotation
         if rotate_x or rotate_y or rotate_z:
-            cmds.xform(a, rotation=list(rotation_vector), ws=True)
+            cmds.xform(node, rotation=list(rotation_vector), ws=True)
         
         # Snap Scale
         if scale_x or scale_y or scale_z:
-            cmds.xform(a, scale=list(scale_vector), ws=True)
+            cmds.xform(node, scale=list(scale_vector), ws=True)

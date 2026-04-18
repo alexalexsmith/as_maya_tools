@@ -54,7 +54,6 @@ class JiggleRig(object):
         self._create_animation_data_locator()
         self._create_jiggle_locator()
         self._create_constraint_control_locator()
-        # build connections and create parent hierarchy
         self._build_rig()
         return
         
@@ -123,7 +122,6 @@ class JiggleRig(object):
         
     def _create_jiggle_geometry(self, size=2):
         """
-        create the jiggle geometry
         :param float size: size of jiggle geometry
         """
         position = self.transform.get_translation(world_space=True)
@@ -167,7 +165,6 @@ class JiggleRig(object):
         # connect time node to jiggle deform node
         cmds.connectAttr("time1.outTime", "{0}.currentTime".format(self.jiggle_deform_node.long_name))
         
-        # create caching node
         self.disk_cache_node = cmds.createNode("diskCache", name="{0}_jiggle_disk_cache".format(self.main_group.short_name))
         self.disk_cache_node = maya_node_utils.MayaNode(node=self.disk_cache_node)
         cmds.setAttr("{0}.hiddenCacheName".format(self.disk_cache_node.long_name), "{0}_jiggle_disk_cache".format(self.main_group.short_name), type="string")
@@ -182,14 +179,12 @@ class JiggleRig(object):
         
     def _create_jiggle_locator(self):
         """
-        create the jiggle locator attached to the jiggle geometry
         """
         self.jiggle_locator = maya_node_utils.MayaNode(node=cmds.spaceLocator(name="{0}_jiggle_locator".format(self.main_group.short_name))[0])
         cmds.pointOnPolyConstraint("{0}.vtx[0]".format(self.jiggle_geometry.long_name), self.jiggle_locator.long_name)
         
     def _create_constraint_control_locator(self):
         """
-        create the constraint control locator
         """
         self.constraint_control_locator = maya_node_utils.MayaNode(node=cmds.spaceLocator(name="{0}_constraint_control_locator".format(self.main_group.short_name))[0])
         
@@ -339,7 +334,6 @@ class JiggleRig(object):
 @decorators.undoable_chunk
 def create_jiggle_rig_from_selection(**kwargs):
     """
-    create jiggle rigs from selection
     """
     selection = cmds.ls(selection=True)
     if len(selection) < 1:

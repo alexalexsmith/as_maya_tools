@@ -115,10 +115,9 @@ class Attribute(object):
         else:
             return 0  #NOTE: default value for translation and rotation attributes
         
-    def get_value(self, world_space=False, time=None):
+    def get_value(self, time=None):
         """
         get the current value
-        :param bool world_space: option to get world value
         :param float time: option to get the value a specified time
         """
         return cmds.getAttr(self.attribute_path)

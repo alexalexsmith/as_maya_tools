@@ -4,7 +4,8 @@ keyframe dragger context tools
 from maya import cmds
 from maya.api import OpenMaya
 
-from as_maya_tools.utilities import maya_utils, keyframe_utils, math_utils, dragger_utils
+from as_maya_tools.utilities import maya_utils, keyframe_utils, math_utils, dragger_utils, attribute_utils
+from as_maya_tools import ICONS
 
 
 class TweenDragger(dragger_utils.Dragger):
@@ -15,6 +16,7 @@ class TweenDragger(dragger_utils.Dragger):
     TITLE = "Tween Dragger"
     CURSOR = "hand"
     DEFAULT_VALUE = 0.5
+    ICON = f"{ICONS}/tweendragger.png"
 
     def __init__(self, *args, **kwargs):
         super(TweenDragger, self).__init__(*args, **kwargs)
@@ -29,15 +31,15 @@ class TweenDragger(dragger_utils.Dragger):
             maya_utils.message("0 nodes selected", position='midCenterTop', record_warning=False)
             raise ValueError("0 transform nodes selected")
 
-        self.current_time = cmds.currentTime(query=True)
-        self.curves = {}
+        self.attributes = None
+        self.attribute_data = {}
         for node in nodes:
-            animatable_attributes = cmds.listAttr(node, keyable=True, unlocked=True, shortNames=True)
+            self.attributes = cmds.listAttr(node, keyable=True, unlocked=True, shortNames=True)
             # skipping node if no animatable attributes are available
-            if not animatable_attributes or len(animatable_attributes) == 0:
+            if not self.attributes or len(self.attributes) == 0:
                 continue
 
-            for attribute in animatable_attributes:
+            for attribute in self.attributes:
 
                 previous_keyframe = cmds.findKeyframe(f"{node}.{attribute}", which="previous")
                 next_keyframe = cmds.findKeyframe(f"{node}.{attribute}", which="next")
@@ -45,46 +47,34 @@ class TweenDragger(dragger_utils.Dragger):
                     continue
                 if not next_keyframe:
                     continue
-                # set keyframe to be manipulated
-                #cmds.setKeyframe(f"{node}.{attribute}", time=(self.current_time,))
-                previous_keyframe_data = keyframe_utils.get_keyframe_data(node, attribute, previous_keyframe)
-                next_keyframe_data = keyframe_utils.get_keyframe_data(node, attribute, next_keyframe)
-                data = {"previous_keyframe_data": previous_keyframe_data, "next_keyframe_data": next_keyframe_data}
-                self.curves[f"{node}.{attribute}"] = data
+
+                previous_keyframe_data = cmds.getAttr(f"{node}.{attribute}", time=previous_keyframe)
+                next_keyframe_data = cmds.getAttr(f"{node}.{attribute}", time=next_keyframe)
+                data = {"previous_keyframe_value": previous_keyframe_data, "next_keyframe_value": next_keyframe_data}
+                self.attribute_data[f"{node}.{attribute}"] = data
+
+        if not self.attributes or len(self.attributes) == 0:
+            maya_utils.message("No attributes found to tween", position='midCenterTop', record_warning=False)
+            raise ValueError("No attributes found to tween")
 
     def press(self):
         """
         Actions taking place on press action
         """
-        # set keyframe will set a keyframe on all attributes. we may want to decide on selected attributes later
+        # set keyframe will set a keyframe on all attributes
         cmds.setKeyframe()
-
-    def pre_drag(self):
-        """
-        pre_drag function adjustments
-        """
-        if self.modifier == "ctrl":
-            self.min_value = 0.0
-            self.max_value = 1.0
-        if not self.modifier == "ctrl":
-            self.min_value = None
-            self.max_value = None
-        if self.modifier == "other":
-            self.multiplier = 0.001
-        if not self.modifier == "other":
-            self.multiplier = 0.01
 
     def drag(self):
         """
-        Activated by the left mouse button, this scales keys toward or away from their default value.
+        Actions activated by left drag
         """
-        for curve in self.curves:
+        for attribute in self.attribute_data:
             cmds.keyframe(
-                curve,
-                time=(self.current_time,),
+                attribute,
+                time=(cmds.currentTime(query=True),),
                 valueChange=math_utils.lerp(
-                    self.curves[curve]["previous_keyframe_data"]["value"],
-                    self.curves[curve]["next_keyframe_data"]["value"],
+                    self.attribute_data[attribute]["previous_keyframe_value"],
+                    self.attribute_data[attribute]["next_keyframe_value"],
                     self.x)
             )
 
@@ -97,6 +87,78 @@ class WSTweenDragger(dragger_utils.Dragger):
     TITLE = "WorldSpace Tween Dragger"
     CURSOR = "hand"
     DEFAULT_VALUE = 0.5
+    ICON = f"{ICONS}/wstweendragger.png"
+    TRANSFORM_ATTRIBUTES = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"]
+
+    def __init__(self, *args, **kwargs):
+        super(WSTweenDragger, self).__init__(*args, **kwargs)
+
+    def _init_subclass(self):
+        """
+        init the dragger tool data
+        """
+        nodes = cmds.ls(selection=True)
+        self.attributes = []
+
+        if nodes is None or len(nodes) == 0:
+            maya_utils.message("0 nodes selected", position='midCenterTop', record_warning=False)
+            raise ValueError("0 transform nodes selected")
+
+        self.node_data = {}
+        for node in nodes:
+            animatable_attributes = cmds.listAttr(node, keyable=True, unlocked=True, shortNames=True)
+            # skipping node if no animatable attributes are available
+            if not animatable_attributes or len(animatable_attributes) == 0:
+                continue
+
+            for attribute in animatable_attributes:
+                if attribute in self.TRANSFORM_ATTRIBUTES:
+                    self.attributes.append(f"{node}.{attribute}")
+
+            previous_keyframe = cmds.findKeyframe(node, which="previous")
+            next_keyframe = cmds.findKeyframe(node, which="next")
+            if not previous_keyframe:
+                continue
+            if not next_keyframe:
+                continue
+
+            # get the world matrix values
+            pre_frame_matrix = OpenMaya.MMatrix(cmds.getAttr(f"{node}.worldMatrix", time=previous_keyframe))
+            next_frame_matrix = OpenMaya.MMatrix(cmds.getAttr(f"{node}.worldMatrix", time=next_keyframe))
+
+            data = {"pre_frame_matrix": pre_frame_matrix, "next_frame_matrix": next_frame_matrix}
+            self.node_data[node] = data
+
+    def press(self):
+        """
+        Actions taking place on press action
+        """
+        # set keyframes on transform attributes
+        cmds.setKeyframe()
+
+    def drag(self):
+        """
+        Actions activated by left drag
+        """
+        for node in self.node_data:
+            # get lerped matrix values
+            lerped_matrix = math_utils.lerp_matrix(self.node_data[node]["pre_frame_matrix"],
+                                                   self.node_data[node]["next_frame_matrix"], self.x)
+            cmds.xform(node, matrix=lerped_matrix, ws=True)
+
+
+class DefaultTweenDragger(dragger_utils.Dragger):
+    """
+    World space tween dragger tool
+    """
+    NAME = "Default Tween Dragger"
+    TITLE = "Default Tween Dragger"
+    CURSOR = "hand"
+    DEFAULT_VALUE = 0.5
+    ICON = f"{ICONS}/defaulttweendragger.png"
+
+    def __init__(self, *args, **kwargs):
+        super(DefaultTweenDragger, self).__init__(*args, **kwargs)
 
     def _init_subclass(self):
         """
@@ -105,121 +167,117 @@ class WSTweenDragger(dragger_utils.Dragger):
         nodes = cmds.ls(selection=True)
 
         if nodes is None or len(nodes) == 0:
-            maya_utils.message("no nodes specified to copy keyframes", position='midCenterTop', record_warning=True)
-            self.release()
-            return
+            maya_utils.message("0 nodes selected", position='midCenterTop', record_warning=False)
+            raise ValueError("0 transform nodes selected")
 
-        self.current_time = cmds.currentTime(query=True)
-        self.curves = {}
+        self.attributes = None
+        self.attribute_data = {}
         for node in nodes:
-
-            animatable_attributes = cmds.listAttr(node, keyable=True, unlocked=True, shortNames=True)
+            self.attributes = cmds.listAttr(node, keyable=True, unlocked=True, shortNames=True)
             # skipping node if no animatable attributes are available
-            if not animatable_attributes or len(animatable_attributes) == 0:
+            if not self.attributes or len(self.attributes) == 0:
                 continue
 
-            previous_keyframe = cmds.findKeyframe(node, which="previous")
-            next_keyframe = cmds.findKeyframe(node, which="next")
-            if not previous_keyframe:
-                continue
-            if not next_keyframe:
-                continue
-            # set keyframe to be manipulated
-            cmds.setKeyframe(node, time=(self.current_time))
+            for attribute in self.attributes:
 
-            # get the worldmatrix values
-            pre_frame_matrix = OpenMaya.MMatrix(cmds.getAttr(f"{node}.worldMatrix", time=previous_keyframe))
-            next_frame_matrix = OpenMaya.MMatrix(cmds.getAttr(f"{node}.worldMatrix", time=next_keyframe))
+                previous_keyframe = cmds.findKeyframe(f"{node}.{attribute}", which="previous")
+                next_keyframe = cmds.findKeyframe(f"{node}.{attribute}", which="next")
+                if not previous_keyframe:
+                    continue
+                if not next_keyframe:
+                    continue
 
-            data = {"pre_frame_matrix": pre_frame_matrix, "next_frame_matrix": next_frame_matrix}
-            self.curves[node] = data
+                as_attribute = attribute_utils.Attribute(f"{node}.{attribute}")
+                default_value = as_attribute.get_default_value()
+                current_value = as_attribute.value
 
-    def pre_drag(self):
+                data = {"default_value": default_value, "current_value": current_value}
+                self.attribute_data[f"{node}.{attribute}"] = data
+
+        if not self.attributes or len(self.attributes) == 0:
+            maya_utils.message("No attributes found to tween", position='midCenterTop', record_warning=False)
+            raise ValueError("No attributes found to tween")
+
+    def press(self):
         """
-        pre_drag function adjustments
+        Actions taking place on press action
         """
-        if self.modifier == "ctrl":
-            self.min_value = 0.0
-            self.max_value = 1.0
-        if not self.modifier == "ctrl":
-            self.min_value = None
-            self.max_value = None
-        if self.modifier == "other":
-            self.multiplier = 0.001
-        if not self.modifier == "other":
-            self.multiplier = 0.01
+        # set keyframe will set a keyframe on all attributes
+        cmds.setKeyframe()
 
     def drag(self):
         """
-        Activated by the left mouse button, this scales keys toward or away from their default value.
+        Actions activated by left drag
         """
-        for curve in self.curves:
-            # get lerp_vector values
-            lerped_matrix = math_utils.lerp_matrix(self.curves[curve]["pre_frame_matrix"],
-                                                   self.curves[curve]["next_frame_matrix"], self.x)
-            cmds.xform(matrix=lerped_matrix, ws=True)
+        for attribute in self.attribute_data:
+            cmds.keyframe(
+                attribute,
+                time=(cmds.currentTime(query=True),),
+                valueChange=math_utils.lerp(
+                    self.attribute_data[attribute]["default_value"],
+                    self.attribute_data[attribute]["current_value"],
+                    self.x)
+            )
 
 
 class CameraDepthDragger(dragger_utils.Dragger):
+    """
+    World space tween dragger tool
+    """
+    NAME = "Camera Depth Dragger"
+    TITLE = "Camera Depth Dragger"
+    CURSOR = "hand"
+    DEFAULT_VALUE = 0.5
+    ICON = f"{ICONS}/cameradepthdragger.png"
 
-    def __init__(self,
-                 name='mlCameraDepthDraggerContext',
-                 min_value=None,
-                 max_value=None,
-                 default_value=0,
-                 title='CameraDepth'):
+    def __init__(self, *args, **kwargs):
+        super(CameraDepthDragger, self).__init__(*args, **kwargs)
 
-        dragger_utils.Dragger.__init__(self, default_value=default_value, min_value=min_value, max_value=max_value,
-                                       name=name, title=title)
-
+    def _init_subclass(self):
+        """
+        init the dragger tool data
+        """
         # get the camera that we're looking through, and the objects selected
-        cam = maya_utils.get_current_camera()
-        sel = cmds.ls(sl=True)
+        camera = maya_utils.get_current_camera()
+        nodes = cmds.ls(selection=True)
 
-        if not sel:
-            OpenMaya.MGlobal.displayWarning('Please make a selection.')
-            self.release()
-            return
+        if nodes is None or len(nodes) == 0:
+            maya_utils.message("0 nodes selected", position='midCenterTop', record_warning=False)
+            raise ValueError("0 transform nodes selected")
 
         # get the position of the camera in space and convert it to a vector
-        cam_pnt = cmds.xform(cam, query=True, worldSpace=True, rotatePivot=True)
-        self.cameraVector = math_utils.Vector(cam_pnt[0], cam_pnt[1], cam_pnt[2])
+        self.camera_position = cmds.xform(camera, query=True, worldSpace=True, rotatePivot=True)
 
-        self.objs = list()
-        self.vector = list()
-        self.normalized = list()
-        for obj in sel:
+        self.node_data = {}
+        for node in nodes:
             # make sure all translate attributes are settable
-            if not cmds.getAttr(obj + '.translate', settable=True):
-                print('not settable')
+            if not cmds.getAttr(f"{node}.translate", settable=True):
                 continue
 
             # get the position of the objects as a vector, and subtract the camera vector from that
-            obj_pnt = cmds.xform(obj, query=True, worldSpace=True, rotatePivot=True)
-            obj_vec = math_utils.Vector(obj_pnt[0], obj_pnt[1], obj_pnt[2])
-            self.objs.append(obj)
-            self.vector.append(obj_vec - self.cameraVector)
-            self.normalized.append(self.vector[-1].normalized())
+            node_position = cmds.xform(node, query=True, worldSpace=True, rotatePivot=True)
+            self.node_data[node] = node_position
 
-        if not self.objs:
+        if not self.node_data:
             OpenMaya.MGlobal.displayWarning('No selected objects are freely translatable')
             return
 
-        if len(sel) != len(self.objs):
+        if len(nodes) != len(self.node_data):
             OpenMaya.MGlobal.displayWarning('Some objects skipped, due to not being freely translatable')
 
-        self.set_tool()
+    def _set_cursor_label_drag_display(self, *args, **kwargs):
+        """
+        defines what is displayed on the cursor label and how it looks when dragging
+        """
+        self.cursor_label.set_color("white")
+        label = f"X:{round(self.lerp_vector[0], 3)} Y:{round(self.lerp_vector[1], 3)} Z:{round(self.lerp_vector[2], 3)}"
+        self.cursor_label.setText(label)
 
-    def drag_mult(self, mult):
-        # as the mouse is dragging, update the position of each object by muliplying
-        # the vector and adding to the original position
-        for obj, v, n in zip(self.objs, self.vector, self.normalized):
-            vector = (n * self.x * mult) + v + self.cameraVector
-
-            cmds.move(vector[0], vector[1], vector[2], obj, absolute=True, worldSpace=True)
-
-    def drag_left(self):
+    def drag(self):
         """
         pre_drag normal speed
         """
-        self.drag_mult(4)
+        self.lerp_vector = [0, 0, 0]
+        for node in self.node_data:
+            self.lerp_vector = math_utils.lerp_vector(self.node_data[node], self.camera_position, self.x)
+            cmds.move(self.lerp_vector[0], self.lerp_vector[1], self.lerp_vector[2], node, absolute=True, worldSpace=True)

@@ -48,7 +48,6 @@ def select_set(**kwargs):
 
 def create_temp_selection_set(**kwargs):
     """
-    create a temporary selection set based on the current selection
     """
     selection_set_utils.create_selection_set(file_name=TEMP_SELECTION_SET, **kwargs)
     return

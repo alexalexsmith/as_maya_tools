@@ -43,8 +43,6 @@ class NoiseGenerationSettingsUI(DockableMainWindowAbstract):
 
     Q_OBJECT_NAME = "noise_generation"
     
-    #STYLE_SHEET_PATH = "{0}/mortarheadd.qss".format(STYLE_SHEETS_PATH)
-    
     def __init__(self, parent=None):
         super(NoiseGenerationSettingsUI, self).__init__(parent)
         
