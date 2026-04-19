@@ -3,7 +3,6 @@ Dragger utilities for creating viewport dragging tools
 """
 from functools import partial
 
-import maya.api.OpenMaya as OpenMaya
 from maya import cmds, mel
 
 from as_maya_tools.utilities import qt_utils, maya_utils

@@ -4,7 +4,7 @@ Dragger context tools
 from maya import cmds
 from maya.api import OpenMaya
 
-from as_maya_tools.utilities import maya_utils, keyframe_utils, math_utils, dragger_utils, attribute_utils
+from as_maya_tools.utilities import maya_utils, math_utils, dragger_utils, attribute_utils
 from as_maya_tools import ICONS
 
 
