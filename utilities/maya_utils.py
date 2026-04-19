@@ -29,11 +29,15 @@ def record_error(function, error):
     :param function: function that caused issue
     :param error: error message
     """
-    exc_type, exc_obj, exc_tb = sys.exc_info()
-    module = inspect.getmodule(function)
-    file_name = inspect.getframeinfo(exc_tb.tb_next).filename
-    line = exc_tb.tb_next.tb_lineno
-    error_message = f"module '{module.__name__}' {error}\nTraceback:\n{file_name}, line {line} in {function.__name__}"
+    error_message = str(error)
+    try:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        module = inspect.getmodule(function)
+        file_name = inspect.getframeinfo(exc_tb.tb_next).filename
+        line = exc_tb.tb_next.tb_lineno
+        error_message = f"module '{module.__name__}' {error}\nTraceback:\n{file_name}, line {line} in {function.__name__}"
+    except Exception as e:
+        OpenMaya.MGlobal.displayError(str(e))
     OpenMaya.MGlobal.displayError(error_message)
     return
 

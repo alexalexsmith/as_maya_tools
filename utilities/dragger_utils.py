@@ -1,6 +1,8 @@
 """
 Dragger utilities for creating viewport dragging tools
 """
+from functools import partial
+
 import maya.api.OpenMaya as OpenMaya
 from maya import cmds, mel
 
@@ -36,10 +38,15 @@ class Dragger(object):
         if not cmds.draggerContext(self.dragger_context, exists=True):
             self.dragger_context = cmds.draggerContext(self.dragger_context)
 
+        # Priming functions with arguments
+        press_function = partial(self.__press, *args, **kwargs)
+        drag_function = partial(self.__drag, *args, **kwargs)
+        release_function = partial(self.__release, *args, **kwargs)
+
         cmds.draggerContext(self.dragger_context, edit=True,
-                            pressCommand=self.__press,
-                            dragCommand=self.__drag,
-                            releaseCommand=self.__release,
+                            pressCommand=press_function,
+                            dragCommand=drag_function,
+                            releaseCommand=release_function,
                             cursor=self.CURSOR,
                             drawString=self.TITLE,
                             undoMode='all'
@@ -56,7 +63,7 @@ class Dragger(object):
         return
 
     @staticmethod
-    def __init_cursor_label(label):
+    def __init_cursor_label(label, *args, **kwargs):
         """
         Initialize the cursor label
         :param label: string label to display
@@ -88,7 +95,7 @@ class Dragger(object):
 
         self.anchor_point = cmds.draggerContext(self.dragger_context, query=True, anchorPoint=True)
         self.button = cmds.draggerContext(self.dragger_context, query=True, button=True)
-        cmds.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True, chunkName=self.NAME)
 
         # Run press command if there are any other functions the user wants to apply before drag begins
         try:
@@ -170,7 +177,7 @@ class Dragger(object):
         private release function
         """
         self.release()
-        cmds.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True, chunkName=self.NAME)
         if self.cursor_label:
             self.cursor_label.close()
         mel.eval('SelectTool')
